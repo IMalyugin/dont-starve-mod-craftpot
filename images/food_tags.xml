@@ -1,0 +1,16 @@
+<Atlas><Texture filename="food_tags.tex" /><Elements>
+    <Element name="meat.tex" u1="0" u2="0.2" v1="0.8" v2="1" />
+    <Element name="monster.tex" u1="0" u2="0.2" v1="0.6" v2="0.8" />
+    <Element name="veggie.tex" u1="0.2" u2="0.4" v1="0.8" v2="1" />
+    <Element name="fruit.tex" u1="0.2" u2="0.4" v1="0.6" v2="0.8" />
+    <Element name="fish.tex" u1="0.4" u2="0.6" v1="0.8" v2="1" />
+    <Element name="egg.tex" u1="0.4" u2="0.6" v1="0.6" v2="0.8" />
+    <Element name="sweetener.tex" u1="0.6" u2="0.8" v1="0.8" v2="1" />
+    <Element name="inedible.tex" u1="0.6" u2="0.8" v1="0.6" v2="0.8" />
+    <Element name="dairy.tex" u1="0.8" u2="1" v1="0.8" v2="1" />
+    <Element name="fat.tex" u1="0.8" u2="1" v1="0.6" v2="0.8" />
+    <Element name="frozen.tex" u1="0" u2="0.2" v1="0.4" v2="0.6" />
+    <Element name="magic.tex" u1="0.2" u2="0.4" v1="0.4" v2="0.6" />
+    <Element name="decoration.tex" u1="0.4" u2="0.6" v1="0.4" v2="0.6" />
+    <Element name="seed.tex" u1="0.6" u2="0.8" v1="0.4" v2="0.6" />
+</Elements></Atlas>

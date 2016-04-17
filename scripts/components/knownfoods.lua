@@ -1,5 +1,3 @@
-local Cooking = require "cooking"
-
 local KnownFoods = Class(function(self, owner)
   self.owner = owner
   self._dtag = 0.5
@@ -12,7 +10,7 @@ local KnownFoods = Class(function(self, owner)
   self._ingredients = {} -- all known ingredients
   self._alltags = {} -- all known tags
   self._allnames ={} -- all known names
-  self._oftenExcludedTags = {'meat','monster','veggie','frozen','inedible','eggs','fruit','sweetener','diary',''}
+  --self._oftenExcludedTags = {'meat','monster','veggie','frozen','inedible','eggs','fruit','sweetener','diary',''}
 
   self._aliases = {
   	cookedsmallmeat = "smallmeat_cooked",
@@ -47,16 +45,45 @@ function KnownFoods:SetCooker(inst)
   self._cookername = inst.prefab
 end
 
+
+function KnownFoods:_CopyTable(table)
+  local t = {}
+  for k,v in pairs(table) do
+    t[k] = v
+  end
+  return t
+end
+
+function KnownFoods:_CompareTables(t1, t2)
+  if #t1 ~= #t2 then return false end
+  for i=1,#t1 do
+    if t1[i] ~= t2[i] then return false end
+  end
+  return true
+end
+
+-- pcall wrapper, returns:
+--  1 for success,
+--  0 for fail,
+-- -1 for compare error,
+-- -2 for sum error,
+-- -3 for unknown error
+function KnownFoods:_ptest(test,names,tags)
+  local st,res = pcall(test,'',names,tags)
+  return st and (res and 1 or 0) or string.find(res,'compare') and -1 or string.find(res, 'arith') and -2 or -3
+end
+
 function KnownFoods:OnAfterLoad(config)
   self._config = config
+  self._Cooking = require "cooking"
 
-  self._ingredients = Cooking.ingredients
+  self._ingredients = self._Cooking.ingredients
   self:_FillIngredients()
-  for cookername,recipes in pairs(Cooking.recipes) do
+
+  for cookername,recipes in pairs(self._Cooking.recipes) do
     for foodname,recipe in pairs(recipes) do
       self._cookerRecipes[foodname] = recipe
       self._cookerRecipes[foodname].cookername = cookername
-
     end
   end
 
@@ -77,129 +104,84 @@ function KnownFoods:OnAfterLoad(config)
     end
   end
 
-  -- finally attempt to extract missing recipes from the raw cookbook
-  local unknownFoodnames = self:_GetUnknownFoodnames()
-  if #unknownFoodnames > 0 then
-    local rawRecipes = self:_BruteSearch(unknownFoodnames)
-    for foodname, recipe in pairs(rawRecipes) do
-      if self:MinimizeRecipe(foodname, recipe) then
-        self._knownfoods[foodname] = recipe
-      end
+  -- finally extract missing recipes from the raw cookbook
+  local unknownRecipes = self:_GetUnknownRecipes()
+  for foodname, recipe in pairs(unknownRecipes) do
+    print("Smart search of "..foodname)
+    local rawRecipe = self:_SmartSearch(recipe.test)
+    if rawRecipe and self:MinimizeRecipe(foodname, rawRecipe) then
+      self._knownfoods[foodname] = rawRecipe
     end
   end
-
 end
 
--- perform iterative search over preparedfood list and attempt to find their real recipes
-function KnownFoods:_BruteSearch(remaining)
-  local matches = {}
-  local tags, tags1, tags2, tags3
-  local backup
+-- perform iterative search over missing preparedfood list recipes and attempt to find their real recipes
+function KnownFoods:_SmartSearch(test)
+  --local vtags = {} -- holds tags with possible values {vtags.veggie = {nil, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4}}
+  --local vnames = {} -- holds names with possible values {vnames.froglegs = {nil,1,2,3,4}}
+  local tags = {}
+  local names = {}
 
-  print('Craft Pot ~~~ Brute Search initiated')
-  print('Total unknown recipes: '..#remaining)
+  local tags_proxy = {}
+  local names_proxy = {}
 
-  -- step 1 all names and tags included
-  self:_GroupTestTags(self._alltags, remaining, matches)
-  print('Unknown recipes after step 1: '..#remaining)
+  local recipe = {tags={},names={}}
 
+  local access_list = {} -- list of {type='names'/'tags', field={field}}
 
+  setmetatable(names_proxy, {__index=function(t,field)
+    table.insert(access_list, {type='names',field=field})
+    return names[field]
+  end})
 
-  for num_names=3,1,-1 do -- try with all different amounts
-    self:_FillIngredients(num_names)
+  setmetatable(tags_proxy, {__index=function(t,field)
+    table.insert(access_list, {type='tags',field=field})
+    return tags[field]
+  end})
 
-    -- step 2 exclude all tags
-    self:_GroupTestTags({}, remaining, matches)
-    print('Unknown recipes after step 2-'..num_names..': '..#remaining)
+  local result
+  while true do
+    access_list = {}
+    result = self:_ptest(test,names_proxy,tags_proxy)
 
-    -- step 3 add one tag
-    for inc1,_v in pairs(self._alltags) do
-      tags = {}
-      tags[inc1] = 1
-
-      self:_GroupTestTags(tags, remaining, matches)
-    end
-    print('Unknown recipes after step 3-'..num_names..': '..#remaining)
-
-    if num_names <= 2 then
-      -- step 4 add two tags
-      for inc1,_v in pairs(self._alltags) do
-        tags = {}
-        tags[inc1] = 1
-        for inc2,_v in pairs(self._alltags) do
-          tags2 = self:_CopyTable(tags)
-          tags2[inc2] = tags2[inc2] and tags2[inc2] + 1 or 1
-
-          self:_GroupTestTags(tags2, remaining, matches)
+    if result == 1 then
+      return self:_RawToSimple(names,tags)
+    elseif result == -3 or #access_list == 0 then -- test returned unknown error or no access
+      print ("Could not find recipe, unknown error"..result)
+      return false
+    elseif result == -2 then -- test returned arithmetic error
+      local found = false
+      for idx=#access_list,0,-1 do -- iterate access_list from end to start
+        if not recipe[access_list[idx].type] then
+          recipe[access_list[idx].type] = 0
+          found = true
+          break
         end
       end
-      print('Unknown recipes after step 4-'..num_names..': '..#remaining)
-    end
-
-    if num_names == 1 then
-      -- step 5 add three tags
-      for inc1,_v in pairs(self._alltags) do
-        tags = {}
-        tags[inc1] = 1
-        for inc2,_v in pairs(self._alltags) do
-          tags2 = self:_CopyTable(tags)
-          tags2[inc2] = tags2[inc2] and tags2[inc2] + 1 or 1
-          for inc3,_v in pairs(self._alltags) do
-            tags3 = self:_CopyTable(tags2)
-            tags3[inc3] = tags3[inc3] and tags3[inc3] + 1 or 1
-
-            self:_GroupTestTags(tags3, remaining, matches)
-          end
+      if not found then -- could not fix sum error ???
+        print ("Could not find recipe, persistent sum error")
+        return false
+      end
+    else -- test returned false or compare error (-1 or 0)
+      local access = table.remove(access_list)
+      if access.type == 'tags' then
+        tags[access.field] = tags[access.field] and tags[access.field] + 0.5 or 0.5
+        if tags[access.field] > 4 then -- quit condition, tag over max value
+          print ("Could not find recipe, tag over max")
+          return false
+        end
+      elseif access.type == 'names' then
+        names[access.field] = names[access.field] and names[access.field] + 1 or 1
+        if names[access.field] > 4 then -- quit condition name over max value
+          print ("Could not find recipe, name over max")
+          return false
         end
       end
-      print('Unknown recipes after step 5: '..#remaining)
-    end
 
-  end
+    end -- else
 
-  --- test all 4 names no tags
-  self:_FillIngredients(4)
-  self:_GroupTestTags({}, remaining, matches)
-  print('Unknown recipes after step 6: '..#remaining)
+  end -- white true
 
-  -- test all 3 names, exclude 1-2 tag --TODO change to include 3 tags full
-  self:_FillIngredients(3)
-  for exclude1,_v in pairs(self._alltags) do
-    self._alltags[exclude1] = nil
-    for exclude2,_v in pairs(self._alltags) do
-      self._alltags[exclude2] = nil
-      self:_GroupTestTags(self._alltags, remaining, matches)
-      self._alltags[exclude2] = 3
-    end
-    self._alltags[exclude1] = 3
-  end
-  print('Unknown recipes after step 7: '..#remaining)
-
-  self:_FillIngredients() -- back to default
-
-  for idx,name in ipairs(remaining) do
-    print("Craft Pot ~~~ Could not find recipe for "..name)
-  end
-
-  return matches
-end
-
-function KnownFoods:_CopyTable(table)
-  local t = {}
-  for k,v in pairs(table) do
-    t[k] = v
-  end
-  return t
-end
-
-function KnownFoods:_GroupTestTags(in_tags, inout_remaining, out_matches)
-  for idx=#inout_remaining,1,-1 do
-    local foodname = inout_remaining[idx]
-    if self._knownfoods[foodname] or self:_Test(foodname, self._allnames, in_tags) then
-      out_matches[foodname] = self:_RawToSimple(self._allnames, in_tags)
-      table.remove(inout_remaining,idx)
-    end
-  end
 end
 
 function KnownFoods:_RawToSimple(names, tags)
@@ -233,7 +215,6 @@ end
 
 function KnownFoods:MinimizeRecipe(foodname,recipe)
   -- save foodname inside of the recipe
-
   -- validate recipe existence
   if not self._cookerRecipes[foodname] then
     self._exknownfoods[foodname] = recipe
@@ -242,12 +223,14 @@ function KnownFoods:MinimizeRecipe(foodname,recipe)
   end
 
   recipe.name = foodname
+  recipe.test = self._cookerRecipes[foodname].test
   recipe.cookername = self._cookerRecipes[foodname].cookername
   recipe.priority = self._cookerRecipes[foodname].priority
 
   -- validate used names and tags
   local names = {}
   local tags = {}
+  local test = recipe.test
 
   for name, amount in pairs(recipe.minnames) do
     names[name] = amount
@@ -257,7 +240,7 @@ function KnownFoods:MinimizeRecipe(foodname,recipe)
     tags[tag] = amount
   end
 
-  if not self:_Test(foodname, names, tags) then
+  if self:_ptest(test, names, tags) ~= 1 then
     print("Craft Pot ~~~ Invalid recipe for "..foodname)
     return false
   end
@@ -269,16 +252,16 @@ function KnownFoods:MinimizeRecipe(foodname,recipe)
   -- *************
   for name,amount in pairs(names) do
     names[name] = nil
-    if self:_Test(foodname, names, tags) then -- _Test[nil] == true, not a required name
+    if self:_ptest(test, names, tags) == 1 then -- _Test[nil] == true, not a required name
       recipe.minnames[name] = nil
     else -- _Test[nil] == false, minname is required
       names[name] = amount - 1
 
-      if not self:_Test(foodname, names, tags) then -- _Test[amount-1] == false, valid minname
+      if self:_ptest(test, names, tags) ~= 1 then -- _Test[amount-1] == false, valid minname
         names[name] = amount
       else -- _Test[amount-1] == true, invalid restriction
         names[name] = 1
-        while not self:_Test(foodname, names, tags) and names[name] <= 4 do
+        while self:_ptest(test, names, tags) ~= 1 and names[name] <= 4 do
           names[name] = names[name] + 1
         end
         recipe.minnames[name] = names[name]
@@ -291,16 +274,16 @@ function KnownFoods:MinimizeRecipe(foodname,recipe)
   -- ************
   for tag,amount in pairs(tags) do
     tags[tag] = nil
-    if self:_Test(foodname, names, tags) then -- _Test[nil] == true, not a required tag
+    if self:_ptest(test, names, tags) == 1 then -- _Test[nil] == true, not a required tag
       recipe.mintags[tag] = nil
     else -- _Test[nil] == false, mintag is required
       tags[tag] = amount - self._dtag
 
-      if not self:_Test(foodname, names, tags) then -- _Test[amount-1] == false, valid mintag
+      if self:_ptest(test, names, tags) ~= 1 then -- _Test[amount-1] == false, valid mintag
         tags[tag] = amount
       else -- _Test[amount-1] == true, invalid restriction
         tags[tag] = self._dtag
-        while not self:_Test(foodname, names, tags) and tags[tag] < 1001 do
+        while self:_ptest(test, names, tags) ~= 1 and tags[tag] < 1001 do
           tags[tag] = tags[tag] + self._dtag
         end
         recipe.mintags[tag] = tags[tag]
@@ -318,13 +301,13 @@ function KnownFoods:MinimizeRecipe(foodname,recipe)
 
      maxtest = math.max(recipe.minnames[name] and recipe.minnames[name] + 1 or 0, recipe.maxnames[name] and recipe.maxnames[name] + 1 or 0, 1)
      names[name] = maxtest
-    if self:_Test(foodname, names, tags) then -- _Test[amount+1] == true, invalid restriction
+    if self:_ptest(test, names, tags) == 1 then -- _Test[amount+1] == true, invalid restriction
       names[name] = 4
-      if self:_Test(foodname, names, tags) then -- _Test[amount+1] == true and _Test[1000] == true, no restriction needed
+      if self:_ptest(test, names, tags) == 1 then -- _Test[amount+1] == true and _Test[1000] == true, no restriction needed
         recipe.maxnames[name] = nil
       else -- _Test[amount+1] == true and _Test[1000] == false, restriction is somwhere above
         names[name] = maxtest + 1
-        while self:_Test(foodname, names, tags) and names[name] <= 4 do
+        while self:_ptest(test, names, tags) == 1 and names[name] <= 4 do
           names[name] = names[name] + 1
         end
         recipe.maxnames[name] = names[name] - 1
@@ -332,7 +315,7 @@ function KnownFoods:MinimizeRecipe(foodname,recipe)
     else -- _Test[amount+1] == false, valid restriction, but maybe we could reduce it
       repeat
         names[name] = names[name] - 1
-      until names[name] <= 0 or self:_Test(foodname,names,tags)
+      until names[name] <= 0 or self:_ptest(test,names,tags) == 1
       recipe.maxnames[name] = names[name]
     end
 
@@ -347,13 +330,13 @@ function KnownFoods:MinimizeRecipe(foodname,recipe)
 
     maxtest = math.max(recipe.mintags[tag] and recipe.mintags[tag] + self._dtag or 0, recipe.maxtags[tag] and recipe.maxtags[tag] + self._dtag or 0, self._dtag)
     tags[tag] = maxtest
-    if self:_Test(foodname, names, tags) then -- _Test[amount+1] == true, invalid restriction
+    if self:_ptest(test, names, tags) == 1 then -- _Test[amount+1] == true, invalid restriction
       tags[tag] = 1000
-      if self:_Test(foodname, names, tags) then -- _Test[amount+1] == true and _Test[1000] == true, no restriction needed
+      if self:_ptest(test, names, tags) == 1 then -- _Test[amount+1] == true and _Test[1000] == true, no restriction needed
         recipe.maxtags[tag] = nil
       else -- _Test[amount+1] == true and _Test[1000] == false, restriction is somwhere above
         tags[tag] = maxtest + self._dtag
-        while self:_Test(foodname, names, tags) and tags[tag] < 1001 do
+        while self:_ptest(test, names, tags) == 1 and tags[tag] < 1001 do
           tags[tag] = tags[tag] + self._dtag
         end
         recipe.maxtags[tag] = tags[tag] - self._dtag
@@ -361,18 +344,82 @@ function KnownFoods:MinimizeRecipe(foodname,recipe)
     else -- _Test[amount+1] == false, valid restriction, but maybe we could reduce it
       repeat
         tags[tag] = tags[tag] - self._dtag
-      until tags[tag] <= 0 or self:_Test(foodname,names,tags)
+      until tags[tag] <= 0 or self:_ptest(test,names,tags) == 1
       recipe.maxtags[tag] = tags[tag]
     end
 
     tags[tag] = buffer
   end
 
+
+  --[[local minnames = recipe.minnames -- these are links to recipe tables,
+  local mintags = recipe.mintags   -- any changes to them will be applied to the recipe
+
+  local minnames_list = deepcopy(minnames)
+  local mintags_list = deepcopy(mintags)
+
+  -- tracing simple analog
+  -- first by trading 1 name for something else
+  for minname, amt in pairs(minnames_list) do
+    buffer = minnames[minname]
+    minnames[minname] = minnames[minname] > 1 and minnames[minname]-1 or nil -- reduce name by 1
+
+ -- try to replace minname it with a new name
+    for name,_ in pairs(self._allnames) do
+      if name ~= minname then
+        minnames[name] = minnames[name] and minnames[name]+1 or 1
+        if self:_ptest(test,minnames,mintags) == 1 then
+        --  print("Found an analog for "..foodname.." can use "..name.." instead of "..minname)
+        end
+        minnames[name] = minnames[name] > 1 and minnames[name]-1 or nil
+      end
+    end
+
+  -- try to replace minname with a new tag
+    for tag,_ in pairs(self._alltags) do
+      mintags[tag] = mintags[tag] and mintags[tag]+1 or 1
+      if self:_ptest(test,minnames,mintags) == 1 then
+        --print("Found an analog for "..foodname.." can use "..tag.." instead of "..minname)
+      end
+      mintags[tag] = mintags[tag] > 1 and mintags[tag]-1 or nil
+    end
+
+    minnames[minname] = buffer
+  end
+
+  -- then by trading 1 tag for something else
+  for mintag, amt in pairs(mintags_list) do
+    buffer = mintags[mintag]
+    mintags[mintag] = mintags[mintag] > 1 and mintags[mintag]-1 or nil -- reduce mintag by 1
+
+ -- try to replace mintag it with a new name
+    for name,_ in pairs(self._allnames) do
+      minnames[name] = minnames[name] and minnames[name]+1 or 1
+      if self:_ptest(test,minnames,mintags) == 1 then
+      --  print("Found an analog for "..foodname.." can use "..name.." instead of "..mintag)
+      end
+      minnames[name] = minnames[name] > 1 and minnames[name]-1 or nil
+    end
+
+  -- try to replace mintag with a new tag
+    for tag,_ in pairs(self._alltags) do
+      if tag ~= mintag then
+        mintags[tag] = mintags[tag] and mintags[tag]+1 or 1
+        if self:_ptest(test,minnames,mintags) == 1 then
+        --  print("Found an analog for "..foodname.." can use "..tag.." instead of "..mintag)
+        end
+        mintags[tag] = mintags[tag] > 1 and mintags[tag]-1 or nil
+      end
+    end
+
+    mintags[mintag] = buffer
+  end]]
+
   return true
 end
 
 function KnownFoods:_Test(foodname, names, tags)
-  if self._cookerRecipes[foodname].test(self._basiccooker, names, tags) then -- cooker here has no meaning
+  if self:_ptest(self._cookerRecipes[foodname].test, names, tags) == 1 then -- cooker here has no meaning
     return true
   end
   return false
@@ -412,12 +459,12 @@ function KnownFoods:_FillIngredients(num_names)
   end
 end
 
-function KnownFoods:_GetUnknownFoodnames()
+function KnownFoods:_GetUnknownRecipes()
   local unknown = {}
 
   for foodname,recipe in pairs(self._cookerRecipes) do
     if not self._knownfoods[foodname] then
-      table.insert(unknown, foodname)
+      unknown[foodname] = recipe
     end
   end
 

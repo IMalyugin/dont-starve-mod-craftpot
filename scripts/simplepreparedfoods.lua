@@ -11,7 +11,8 @@ local foods=
     minnames = {froglegs=1},
     maxnames = {},
     mintags = {veggie=0},
-    maxtags = {}
+    maxtags = {},
+		minmix = { {name={"froglegs","froglegs_cooked"},amt=1},{tag='veggie',amt=1} }
   }
 }
 

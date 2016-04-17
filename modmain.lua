@@ -13,17 +13,38 @@ Assets = {
 --local recipes = cooking.recipes["cookpot"] or {}
 --local ingredients = cooking.ingredients or {}
 
+local _SimLoaded = false
+local _GameLoaded = false
+
 local function OnLoad(player)
-    player:AddComponent('knownfoods')
+	if player and player.components and not player.components.knownfoods then
+  	player:AddComponent('knownfoods')
+	end
 end
 
-local function OnAfterLoad(player)
-  if not player.components.knownfoods then
-    player:AddComponent('knownfoods')
-  end
-	local config = {lock_uncooked=GetModConfigData("lock_uncooked")}
-  player.components.knownfoods:OnAfterLoad(config)
+local function OnAfterLoad()
+	local player = GetPlayer()
+	if player and player.components and player.components.knownfoods then
+		local config = {lock_uncooked=GetModConfigData("lock_uncooked")}
+		player.components.knownfoods:OnAfterLoad(config)
+	end
 end
+
+local function OnSimLoad()
+	_SimLoaded = true
+	if _GameLoaded == true then
+		OnAfterLoad()
+	end
+end
+
+local function OnGameLoad()
+	_GameLoaded = true
+	if _SimLoaded == true then
+		OnAfterLoad()
+	end
+
+end
+
 
 local function ControlsPostInit(self)
   local num_slots = 7
@@ -72,9 +93,12 @@ end
 
 
 AddPlayerPostInit(OnLoad)
-AddSimPostInit(OnAfterLoad)
+
+-- these two loads race each other, last one gets to launch OnAfterLoad
+AddSimPostInit(OnSimLoad) -- fires before game init
+AddGamePostInit(OnGameLoad) -- fires last, unless it is first game launch, then it fires first
 AddClassPostConstruct("widgets/controls", ControlsPostInit)
 
--- AddComponentPostInit("stewer",StewerPostInit)
+--AddComponentPostInit("stewer",StewerPostInit)
 -- sadly we have to try every prefab ingame, since we just can't bind events onto postinit of stewer.host prefab
 AddPrefabPostInitAny(CookerPostInit)

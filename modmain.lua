@@ -1,3 +1,23 @@
+-- Thanks to simplex for this clever memoized DST check!
+local is_dst
+local function IsDST()
+    if is_dst == nil then
+		-- test changing this to: (still need to test single-player)
+        is_dst = GLOBAL.TheSim:GetGameID() == "DST"
+        -- is_dst = GLOBAL.kleifileexists("scripts/networking.lua") and true or false
+    end
+    return is_dst
+end
+
+local function GetPlayer()
+	if IsDST() then
+		return GLOBAL.ThePlayer
+	else
+		return GLOBAL.GetPlayer()
+	end
+end
+
+
 local require = GLOBAL.require
 local Vector3 = GLOBAL.Vector3
 local GetPlayer = GLOBAL.GetPlayer
@@ -28,6 +48,13 @@ local function OnAfterLoad()
 		local config = {lock_uncooked=GetModConfigData("lock_uncooked")}
 		player.components.knownfoods:OnAfterLoad(config)
 	end
+
+	local data = GLOBAL.PREFABDEFINITIONS['cutlichen']
+	print("~~~test start "..#data.assets)
+	for idx,asset in ipairs(data.assets) do
+		print("~~[]"..idx.."] type=`"..asset.type.."`, file=`"..asset.file.."`")
+	end
+	print("~~~test end")
 end
 
 local function OnSimLoad()
@@ -47,13 +74,13 @@ end
 
 
 local function ControlsPostInit(self)
-  local num_slots = 7
-  self.foodcrafting = self.containerroot:AddChild(MouseFoodCrafting(num_slots))
+  self.foodcrafting = self.containerroot:AddChild(MouseFoodCrafting(GetPlayer()))
   self.foodcrafting:Hide()
 end
 
 local function CookerPostInit(inst)
 	if not inst.components.stewer then return end
+
 
 -- store base metods
   local onopenfn = inst.components.container.onopenfn

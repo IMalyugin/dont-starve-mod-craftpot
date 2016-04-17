@@ -13,15 +13,17 @@ local ImageButton = require "widgets/imagebutton"
 --local Text = require "widgets/text"
 local FoodCraftSlots = require "widgets/foodcraftslots"--mod
 
-local FoodCrafting = Class(Crafting, function(self, num_slots)
+local FoodCrafting = Class(Crafting, function(self, num_slots, owner)
   Crafting._base._ctor(self, "FoodCrafting")
 
-	self.owner = GetPlayer()
+	self.owner = owner
 
   self.bg = self:AddChild(TileBG(HUD_ATLAS, "craft_slotbg.tex"))
 
   --slots
   self.num_slots = num_slots
+  --self.max_slots = num_slots
+  --self.current_slots = num_slots
   self.craftslots = FoodCraftSlots(num_slots, self.owner)
   self:AddChild(self.craftslots)
 

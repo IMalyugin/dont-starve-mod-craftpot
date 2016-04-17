@@ -5,6 +5,7 @@ require "class"
 local Image = require "widgets/image"
 --local ImageButton = require "widgets/imagebutton"
 local Widget = require "widgets/widget"
+
 --local TabGroup = require "widgets/tabgroup"
 --local UIAnim = require "widgets/uianim"
 --local Text = require "widgets/text"
@@ -14,11 +15,7 @@ local FoodTile = Class(Widget, function(self, foodname)
     self.img = self:AddChild(Image())
     self.atlas = resolvefilepath("images/inventoryimages.xml")
     self:SetClickable(false)
-    if foodname then
-        self.foodname = recipe
-        self.img:SetTexture(self.atlas, foodname..".tex")
-        --self:MakeNonClickable()
-    end
+    self.numtiles = 0
 end)
 
 function FoodTile:SetRecipe(foodname)

@@ -10,6 +10,7 @@ local UIAnim = require "widgets/uianim"
 local Text = require "widgets/text"
 
 local FoodIngredientUI = require "widgets/foodingredientui"
+local mainfunctions = require "mainfunctions"
 
 require "widgets/widgetutil"
 
@@ -140,9 +141,18 @@ function FoodRecipePopup:Refresh()
         local atlas
         if is_name then
           atlas = self.atlas
-          if SaveGameIndex:IsModeShipwrecked() and SW_ICONS[item_img] ~= nil then
-            item_img = SW_ICONS[item_img]
+
+          for idx,asset in ipairs(PREFABDEFINITIONS[item_img].assets) do
+            if asset.type == "INV_IMAGE" then
+              item_img = asset.file
+            elseif asset.type == "ATLAS" then
+              atlas = asset.file
+            end
           end
+
+          --[[if SaveGameIndex:IsModeShipwrecked() and SW_ICONS[item_img] ~= nil then
+            item_img = SW_ICONS[item_img]
+          end]]
 
         else
           if TEX_TAGS[item_img] then

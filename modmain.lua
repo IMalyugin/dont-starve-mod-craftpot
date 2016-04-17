@@ -48,13 +48,6 @@ local function OnAfterLoad()
 		local config = {lock_uncooked=GetModConfigData("lock_uncooked")}
 		player.components.knownfoods:OnAfterLoad(config)
 	end
-
-	local data = GLOBAL.PREFABDEFINITIONS['cutlichen']
-	print("~~~test start "..#data.assets)
-	for idx,asset in ipairs(data.assets) do
-		print("~~[]"..idx.."] type=`"..asset.type.."`, file=`"..asset.file.."`")
-	end
-	print("~~~test end")
 end
 
 local function OnSimLoad()

@@ -141,7 +141,6 @@ function FoodRecipePopup:Refresh()
         local atlas
         if is_name then
           atlas = self.atlas
-
           for idx,asset in ipairs(PREFABDEFINITIONS[item_img].assets) do
             if asset.type == "INV_IMAGE" then
               item_img = asset.file
@@ -149,17 +148,21 @@ function FoodRecipePopup:Refresh()
               atlas = asset.file
             end
           end
-
-          --[[if SaveGameIndex:IsModeShipwrecked() and SW_ICONS[item_img] ~= nil then
-            item_img = SW_ICONS[item_img]
-          end]]
-
         else
           if TEX_TAGS[item_img] then
             atlas = self.tag_atlas
             localized_name = TEX_TAGS[item_img]
           else
             atlas = self.atlas
+            if PREFABDEFINITIONS[item_img] then
+              for idx,asset in ipairs(PREFABDEFINITIONS[item_img].assets) do
+                if asset.type == "INV_IMAGE" then
+                  item_img = asset.file
+                elseif asset.type == "ATLAS" then
+                  atlas = asset.file
+                end
+              end
+            end
           end
         end
 

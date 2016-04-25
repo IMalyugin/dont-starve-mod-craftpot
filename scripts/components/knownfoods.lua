@@ -6,6 +6,7 @@ local KnownFoods = Class(function(self, owner)
   self._cookername = self._basiccooker
   self._config = {} -- mod config goes in here onafterload
   self._knownfoods = {} -- enchanced format recipes
+  self._exknownfoods = {}
   self._cookerRecipes = {} -- raw format recipes
   self._ingredients = {} -- all known ingredients
   self._alltags = {} -- all known tags
@@ -22,8 +23,11 @@ end)
 
 function KnownFoods:OnSave()
 	local data = {
-    knownfoods = self._knownfoods
+    knownfoods = deepcopy(self._knownfoods)
   }
+  for foodname, recipe in pairs(self._exknownfoods) do
+    data.knownfoods[foodname] = recipe
+  end
 	return data
 end
 

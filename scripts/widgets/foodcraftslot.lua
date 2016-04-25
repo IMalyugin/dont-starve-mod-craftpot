@@ -12,12 +12,12 @@ local Text = require "widgets/text"
 local FoodTile = require "widgets/foodtile"
 local FoodRecipePopup = require "widgets/foodrecipepopup"
 
-local FoodCraftSlot = Class(CraftSlot, function(self, atlas, bgim, owner)
+local FoodCraftSlot = Class(CraftSlot, function(self, owner)
     CraftSlot._base._ctor(self, "FoodCraftSlot")
     self.owner = owner
 
-    self.atlas = atlas
-    self.bgimage = self:AddChild(Image(atlas, bgim))
+    self.atlas = HUD_ATLAS
+    self.bgimage = self:AddChild(Image(self.atlas, "craft_slot.tex"))
     self.reqsmatch = false
 
     self.tile = self:AddChild(FoodTile(nil))

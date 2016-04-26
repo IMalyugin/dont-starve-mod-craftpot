@@ -1,6 +1,6 @@
 name = "Craft Pot"
 author = "IvanX"
-version = "0.521"
+version = "0.522"
 description = "Don't you think cooking and crafting are lot alike?"
 
 priority = -1337

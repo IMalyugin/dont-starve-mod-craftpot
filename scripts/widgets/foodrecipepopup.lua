@@ -141,11 +141,13 @@ function FoodRecipePopup:Refresh()
         local atlas
         if is_name then
           atlas = self.atlas
-          for idx,asset in ipairs(PREFABDEFINITIONS[item_img].assets) do
-            if asset.type == "INV_IMAGE" then
-              item_img = asset.file
-            elseif asset.type == "ATLAS" then
-              atlas = asset.file
+          if PREFABDEFINITIONS[item_img] then
+            for idx,asset in ipairs(PREFABDEFINITIONS[item_img].assets) do
+              if asset.type == "INV_IMAGE" then
+                item_img = asset.file
+              elseif asset.type == "ATLAS" then
+                atlas = asset.file
+              end
             end
           end
         else

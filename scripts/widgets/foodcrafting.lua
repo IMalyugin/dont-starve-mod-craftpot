@@ -20,10 +20,17 @@ local FoodCrafting = Class(Widget, function(self, num_slots, owner)
 
   --slots
   self.num_slots = num_slots
-  self.foodslots = {}
-  --self.craftslots = FoodCraftSlots(num_slots, self.owner)
+  self.foodslots = {} -- numeric array holding with num_slot foodslots
+	self.fooditems = {} -- numeric array of all cooking recipes as fooditems
 
-  --self:AddChild(self.craftslots)
+	-- 1. filter all recipes (if set changed)
+	-- 2. get 7 starting with idx
+	-- 3 for ipairs(foodslots) do foodslot:setitem(fooditem)
+	---- set position for it
+	---- update popup
+
+	
+	--self:AddChild(self.craftslots)
 
   --buttons
   self.downbutton = self:AddChild(ImageButton(HUD_ATLAS, "craft_end_normal.tex", "craft_end_normal_mouseover.tex", "craft_end_normal_disabled.tex"))
@@ -43,6 +50,7 @@ function FoodCrafting:OnAfterLoad()
   --- create all the recipes
   local recipes = self.owner.components.knownfoods:GetCookBook()
   for foodname, recipe in pairs(recipes) do
+		local slot = FoodCraftSlot(owner)
     local foodcraftslot = FoodCraftSlot(self.owner, recipe)
     table.insert(self.foodcraftslots, foodcraftslot)
     self.AddChild(foodcraftslot)

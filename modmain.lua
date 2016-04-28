@@ -1,12 +1,5 @@
--- Thanks to simplex for this clever memoized DST check!
-local is_dst
 local function IsDST()
-    if is_dst == nil then
-		-- test changing this to: (still need to test single-player)
-        is_dst = GLOBAL.TheSim:GetGameID() == "DST"
-        -- is_dst = GLOBAL.kleifileexists("scripts/networking.lua") and true or false
-    end
-    return is_dst
+	return GLOBAL.TheSim:GetGameID() == "DST"
 end
 
 local function GetPlayer()
@@ -16,7 +9,6 @@ local function GetPlayer()
 		return GLOBAL.GetPlayer()
 	end
 end
-
 
 local require = GLOBAL.require
 local Vector3 = GLOBAL.Vector3
@@ -29,10 +21,6 @@ Assets = {
 	Asset("ATLAS", "images/food_tags.xml"),
 	Asset("ATLAS", "images/recipe_hud.xml"),
 }
---local require = GLOBAL.require
---local cooking = require "cooking"
---local recipes = cooking.recipes["cookpot"] or {}
---local ingredients = cooking.ingredients or {}
 
 local _SimLoaded = false
 local _GameLoaded = false
@@ -49,7 +37,7 @@ local function OnAfterLoad()
 	if player and player.components and player.components.knownfoods then
 		local config = {lock_uncooked=GetModConfigData("lock_uncooked")}
 		player.components.knownfoods:OnAfterLoad(config)
-    --player.HUD.controls.foodcrafting:OnAfterLoad(player)
+    player.HUD.controls.foodcrafting:OnAfterLoad(player)
 	end
 end
 

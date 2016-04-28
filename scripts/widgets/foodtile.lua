@@ -10,18 +10,17 @@ local Widget = require "widgets/widget"
 --local UIAnim = require "widgets/uianim"
 --local Text = require "widgets/text"
 
-local FoodTile = Class(Widget, function(self, foodname)
+local FoodTile = Class(Widget, function(self, recipe)
     Widget._ctor(self, "FoodTile")
-    self.img = self:AddChild(Image())
-    self.atlas = resolvefilepath("images/inventoryimages.xml")
+
+		self.foodname = foodname
+
+		self.atlas = resolvefilepath("images/inventoryimages.xml")
+    self.img = self:AddChild(Image(self.atlas, foodname..".tex"))
+
     self:SetClickable(false)
     self.numtiles = 0
 end)
-
-function FoodTile:SetRecipe(foodname)
-    self.foodname = foodname
-    self.img:SetTexture(self.atlas, foodname..".tex")
-end
 
 function FoodTile:SetCanCook(cancook)
     if cancook then

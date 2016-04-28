@@ -1,8 +1,6 @@
 require "class"
 
-local PreparedFoods = require "preparedfoods"
-
-local Crafting = require "widgets/crafting"
+local Widget = require "widgets/widget"
 local TileBG = require "widgets/tilebg"
 --local InventorySlot = require "widgets/invslot"
 local Image = require "widgets/image"
@@ -13,8 +11,8 @@ local ImageButton = require "widgets/imagebutton"
 --local Text = require "widgets/text"
 local FoodCraftSlots = require "widgets/foodcraftslots"--mod
 
-local FoodCrafting = Class(Crafting, function(self, num_slots, owner)
-  Crafting._base._ctor(self, "FoodCrafting")
+local FoodCrafting = Class(Widget, function(self, num_slots, owner)
+  Widget._ctor(self, "FoodCrafting")
 
 	self.owner = owner
 
@@ -127,14 +125,40 @@ function FoodCrafting:UpdateRecipes()
 	end
 end
 
-function FoodCrafting:ScrollUp()
-  Crafting.ScrollUp(self)
-  self:UpdateRecipes()
+function FoodCrafting:OnControl(control, down)
+    if FoodCrafting._base.OnControl(self, control, down) then return true end
+
+    if down and self.focus then
+        if control == CONTROL_MAP_ZOOM_IN then
+            self:ScrollDown()
+            return true
+        elseif control == CONTROL_MAP_ZOOM_OUT then
+            self:ScrollUp()
+            return true
+        end
+    end
 end
 
-function FoodCrafting:ScrollDown()
-  Crafting.ScrollDown(self)
-  self:UpdateRecipes()
+function Crafting:ScrollUp()
+    if not IsPaused() then
+        local oldidx = self.idx
+        self.idx = self.idx + 1
+        self:UpdateRecipes()
+        if self.idx ~= oldidx then
+            self.owner.SoundEmitter:PlaySound("dontstarve/HUD/craft_up")
+        end
+    end
+end
+
+function Crafting:ScrollDown()
+    if not IsPaused() then
+        local oldidx = self.idx
+        self.idx = self.idx - 1
+        self:UpdateRecipes()
+        if self.idx ~= oldidx then
+            self.owner.SoundEmitter:PlaySound("dontstarve/HUD/craft_down")
+        end
+    end
 end
 
 return FoodCrafting

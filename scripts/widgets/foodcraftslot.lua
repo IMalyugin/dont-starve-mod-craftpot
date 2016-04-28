@@ -1,6 +1,7 @@
 require "class"
 
-local CraftSlot = require "widgets/craftslot"
+local Widget = require "widgets/widget"
+
 local TileBG = require "widgets/tilebg"
 local InventorySlot = require "widgets/invslot"
 local Image = require "widgets/image"
@@ -12,8 +13,8 @@ local Text = require "widgets/text"
 local FoodTile = require "widgets/foodtile"
 local FoodRecipePopup = require "widgets/foodrecipepopup"
 
-local FoodCraftSlot = Class(CraftSlot, function(self, atlas, bgim, owner)
-    CraftSlot._base._ctor(self, "FoodCraftSlot")
+local FoodCraftSlot = Class(Widget, function(self, atlas, bgim, owner)
+    Widget._ctor(self, "FoodCraftSlot")
     self.owner = owner
 
     self.atlas = atlas
@@ -25,6 +26,40 @@ local FoodCraftSlot = Class(CraftSlot, function(self, atlas, bgim, owner)
     self.fgimage:Hide()
 
 end)
+
+function FoodCraftSlot:SetOrientation(horizontal)
+    self.horizontal = horizontal
+    self.bg.horizontal = horizontal
+    if horizontal then
+        self.bg.sepim = "craft_sep_h.tex"
+    else
+        self.bg.sepim = "craft_sep.tex"
+    end
+
+    self.bg:SetNumTiles(self.num_slots)
+    local slot_w, slot_h = self.bg:GetSlotSize()
+    local w, h = self.bg:GetSize()
+
+    for k = 1, #self.craftslots.slots do
+        local slotpos = self.bg:GetSlotPos(k)
+        self.craftslots.slots[k]:SetPosition( slotpos.x,slotpos.y,slotpos.z )
+    end
+
+    local but_w, but_h = self.downbutton:GetSize()
+
+    if horizontal then
+        self.downbutton:SetRotation(90)
+        self.downbutton:SetPosition(-self.bg.length/2 - but_w/2 + slot_w/2,0,0)
+        self.upbutton:SetRotation(-90)
+        self.upbutton:SetPosition(self.bg.length/2 + but_w/2 - slot_w/2,0,0)
+    else
+        self.upbutton:SetPosition(0, - self.bg.length/2 - but_h/2 + slot_h/2,0)
+        self.downbutton:SetScale(Vector3(1, -1, 1))
+        self.downbutton:SetPosition(0, self.bg.length/2 + but_h/2 - slot_h/2,0)
+    end
+
+
+end
 
 function FoodCraftSlot:EnablePopup()
     if not self.recipepopup then

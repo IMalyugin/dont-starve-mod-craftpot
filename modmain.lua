@@ -23,6 +23,7 @@ local Vector3 = GLOBAL.Vector3
 local GetPlayer = GLOBAL.GetPlayer
 
 local MouseFoodCrafting = require "widgets/mousefoodcrafting"
+local Constants = require "constants"
 
 Assets = {
 	Asset("ATLAS", "images/food_tags.xml"),
@@ -44,9 +45,11 @@ end
 
 local function OnAfterLoad()
 	local player = GetPlayer()
+
 	if player and player.components and player.components.knownfoods then
 		local config = {lock_uncooked=GetModConfigData("lock_uncooked")}
 		player.components.knownfoods:OnAfterLoad(config)
+    --player.HUD.controls.foodcrafting:OnAfterLoad(player)
 	end
 end
 
@@ -62,7 +65,6 @@ local function OnGameLoad()
 	if _SimLoaded == true then
 		OnAfterLoad()
 	end
-
 end
 
 
@@ -73,7 +75,6 @@ end
 
 local function CookerPostInit(inst)
 	if not inst.components.stewer then return end
-
 
 -- store base metods
   local onopenfn = inst.components.container.onopenfn

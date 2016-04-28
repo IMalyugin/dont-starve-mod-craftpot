@@ -17,8 +17,8 @@ local FoodCraftSlot = Class(Widget, function(self, atlas, bgim, owner)
     Widget._ctor(self, "FoodCraftSlot")
     self.owner = owner
 
-    self.atlas = atlas
-    self.bgimage = self:AddChild(Image(atlas, bgim))
+    self.atlas = HUD_ATLAS
+    self.bgimage = self:AddChild(Image(self.atlas, "craft_slot.tex"))
     self.reqsmatch = false
 
     self.tile = self:AddChild(FoodTile(nil))

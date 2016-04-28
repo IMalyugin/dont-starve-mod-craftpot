@@ -9,7 +9,7 @@ local ImageButton = require "widgets/imagebutton"
 --local TabGroup = require "widgets/tabgroup"
 --local UIAnim = require "widgets/uianim"
 --local Text = require "widgets/text"
-local FoodCraftSlots = require "widgets/foodcraftslots"--mod
+local FoodCraftSlot = require "widgets/foodcraftslot"--mod
 
 local FoodCrafting = Class(Widget, function(self, num_slots, owner)
   Widget._ctor(self, "FoodCrafting")
@@ -20,10 +20,10 @@ local FoodCrafting = Class(Widget, function(self, num_slots, owner)
 
   --slots
   self.num_slots = num_slots
-  --self.max_slots = num_slots
-  --self.current_slots = num_slots
-  self.craftslots = FoodCraftSlots(num_slots, self.owner)
-  self:AddChild(self.craftslots)
+  self.foodslots = {}
+  --self.craftslots = FoodCraftSlots(num_slots, self.owner)
+
+  --self:AddChild(self.craftslots)
 
   --buttons
   self.downbutton = self:AddChild(ImageButton(HUD_ATLAS, "craft_end_normal.tex", "craft_end_normal_mouseover.tex", "craft_end_normal_disabled.tex"))
@@ -36,7 +36,51 @@ local FoodCrafting = Class(Widget, function(self, num_slots, owner)
   self.scrolldir = true
 
   self.open = false
+
 end)
+
+function FoodCrafting:OnAfterLoad()
+  --- create all the recipes
+  local recipes = self.owner.components.knownfoods:GetCookBook()
+  for foodname, recipe in pairs(recipes) do
+    local foodcraftslot = FoodCraftSlot(self.owner, recipe)
+    table.insert(self.foodcraftslots, foodcraftslot)
+    self.AddChild(foodcraftslot)
+  end
+end
+
+
+function FoodCrafting:SetOrientation(horizontal)
+    self.horizontal = horizontal
+    self.bg.horizontal = horizontal
+    if horizontal then
+        self.bg.sepim = "craft_sep_h.tex"
+    else
+        self.bg.sepim = "craft_sep.tex"
+    end
+
+    self.bg:SetNumTiles(self.num_slots)
+    local slot_w, slot_h = self.bg:GetSlotSize()
+    local w, h = self.bg:GetSize()
+
+    for k = 1, #self.craftslots.slots do
+        local slotpos = self.bg:GetSlotPos(k)
+        self.craftslots.slots[k]:SetPosition( slotpos.x,slotpos.y,slotpos.z )
+    end
+
+    local but_w, but_h = self.downbutton:GetSize()
+
+    if horizontal then
+        self.downbutton:SetRotation(90)
+        self.downbutton:SetPosition(-self.bg.length/2 - but_w/2 + slot_w/2,0,0)
+        self.upbutton:SetRotation(-90)
+        self.upbutton:SetPosition(self.bg.length/2 + but_w/2 - slot_w/2,0,0)
+    else
+        self.upbutton:SetPosition(0, - self.bg.length/2 - but_h/2 + slot_h/2,0)
+        self.downbutton:SetScale(Vector3(1, -1, 1))
+        self.downbutton:SetPosition(0, self.bg.length/2 + but_h/2 - slot_h/2,0)
+    end
+end
 
 function FoodCrafting:Open(cooker_inst)
   self.owner.components.knownfoods:SetCooker(cooker_inst)
@@ -139,26 +183,28 @@ function FoodCrafting:OnControl(control, down)
     end
 end
 
-function Crafting:ScrollUp()
-    if not IsPaused() then
-        local oldidx = self.idx
-        self.idx = self.idx + 1
-        self:UpdateRecipes()
-        if self.idx ~= oldidx then
-            self.owner.SoundEmitter:PlaySound("dontstarve/HUD/craft_up")
-        end
+function FoodCrafting:ScrollUp()
+  if not IsPaused() then
+    local oldidx = self.idx
+    self.idx = self.idx + 1
+    self:UpdateRecipes()
+    if self.idx ~= oldidx then
+        self.owner.SoundEmitter:PlaySound("dontstarve/HUD/craft_up")
     end
+  end
+  --self:UpdateRecipes()
 end
 
-function Crafting:ScrollDown()
-    if not IsPaused() then
-        local oldidx = self.idx
-        self.idx = self.idx - 1
-        self:UpdateRecipes()
-        if self.idx ~= oldidx then
-            self.owner.SoundEmitter:PlaySound("dontstarve/HUD/craft_down")
-        end
+function FoodCrafting:ScrollDown()
+  if not IsPaused() then
+    local oldidx = self.idx
+    self.idx = self.idx - 1
+    self:UpdateRecipes()
+    if self.idx ~= oldidx then
+        self.owner.SoundEmitter:PlaySound("dontstarve/HUD/craft_down")
     end
+  end
+  --self:UpdateRecipes()
 end
 
 return FoodCrafting

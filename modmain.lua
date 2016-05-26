@@ -108,6 +108,5 @@ AddSimPostInit(OnSimLoad) -- fires before game init
 AddGamePostInit(OnGameLoad) -- fires last, unless it is first game launch, then it fires first
 AddClassPostConstruct("widgets/controls", ControlsPostInit)
 
---AddComponentPostInit("stewer",StewerPostInit)
 -- sadly we have to try every prefab ingame, since we just can't bind events onto postinit of stewer.host prefab
 AddPrefabPostInitAny(CookerPostInit)

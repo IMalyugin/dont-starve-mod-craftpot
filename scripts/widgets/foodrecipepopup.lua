@@ -10,18 +10,25 @@ local UIAnim = require "widgets/uianim"
 local Text = require "widgets/text"
 
 local FoodIngredientUI = require "widgets/foodingredientui"
-local mainfunctions = require "mainfunctions"
 
-require "widgets/widgetutil"
+local SIZES = {
+	icon = 64,
+	space = 10,
+	alter = 30,
+	bracket = 15,
+	contw = 286,
+	conth = 100
+}
+local EPSILON = 0.01
 
-local TEX_TAGS = {meat="Meats",monster="Monster Foods",veggie="Vegetables",fruit="Fruits",egg="Eggs",sweetener="Sweets",inedible="Inedibles",dairy="Dairies",fat="Fat",frozen="Ice",magic="Magic",decoration="Decoration",seeds="Seeds"}
-
-local FoodRecipePopup = Class(Widget, function(self, horizontal)
+local FoodRecipePopup = Class(Widget, function(self, owner, recipe)
     Widget._ctor(self, "Recipe Popup")
 
+		self.owner = owner
+		self.recipe = recipe
+
     local hud_atlas = resolvefilepath( "images/recipe_hud.xml" )
-    self.atlas = resolvefilepath("images/inventoryimages.xml")
-    self.tag_atlas = resolvefilepath("images/food_tags.xml")
+    --self.atlas = resolvefilepath("images/inventoryimages.xml")
 
     self.bg = self:AddChild(Image())
 		self.bg:SetPosition(210,16,0)
@@ -58,14 +65,167 @@ local FoodRecipePopup = Class(Widget, function(self, horizontal)
       --self.excludes_title:EnableWordWrap(true)
     end
 
+		local center = 317
+		self._minwrap = self.contents:AddChild(Widget(""))
+		self._minwrap:SetPosition(center,115,0)
 
-    self.ing = {min={},max={}}
+		self._maxwrap = self.contents:AddChild(Widget(""))
+		self._maxwrap:SetPosition(center,-35,0)
 
+    --self.maxing = {min={},max={}}
+
+		self:_CreateLayout(self._minwrap, self.recipe.minmix)
+		self:_CreateLayout(self._maxwrap, self.recipe.maxmix)
 end)
 
+function FoodRecipePopup:_CreateLayout(wrapper, mix)
+	local sequence = self:_BuildSequence(mix, {})
+	local groups = self:_BuildGroups(sequence)
+	local zoom = self:_FindZoom(groups)
+
+	local gwidth  = (SIZES.contw + SIZES.space) / zoom
+	local left, top = 0, 0
+
+	for idx,group in ipairs(groups) do
+		-- insert element
+		local offset = 0
+		for _,component in ipairs(group.sequence) do
+			if component == '(' or component == ')' then
+				offset = offset + SIZES.bracket
+			elseif component == '/' then
+				offset = offset + SIZES.alter
+			else
+				offset = offset + SIZES.icon
+			end
+			self:_InsertComponent(wrapper,component,left+offset,top)
+		end
+
+		left = left + group.size
+
+		if left > gwidth + EPSILON then -- overflow x
+			left = 0
+			top = top + SIZES.icon + SIZES.space
+		end
+	end -- groups
+end
+
+function FoodRecipePopup:_BuildSequence(mix, arr)
+	for cid, conj in ipairs(mix) do
+		if conj.amt then
+			table.insert(arr, conj) -- icon of conjuction
+		else
+			local brackets = (#arr ~= 0 or #mix == 0)
+			if brackets then
+				table.insert(arr, '(')
+			end
+			for aid, alt in ipairs(conj) do
+				if aid > 1 then
+					table.insert(arr, '/') -- or
+				end
+				if alt.amt then
+					table.insert(arr, alt) -- icon of alternation
+				else
+					self:_BuildSequence(alt, arr)
+				end
+			end
+			if brackets then
+				table.insert(arr, ')')
+			end
+		end
+	end
+	return arr
+end
+
+function FoodRecipePopup:_BuildGroups(sequence)
+	local groups = {}
+	local group = {sequence={},size=0}
+	local prev = '^'
+
+	for idx, symbol in ipairs(sequence) do
+		-- insert space before symbol unless near a bracket
+		if prev ~= '^' and (symbol ~= ')' and prev ~= '(') then
+			table.insert(group.sequence, '_')
+			group.size = group.size + SIZES.space
+			-- if space was inserted and not after 'or' symbol, the group is finished
+			if prev ~= '/' then
+				table.insert(groups, group)
+				group = {sequence={}, size=0}
+			end
+		end
+
+		table.insert(group.sequence, symbol)
+		if symbol == '(' or symbol == ')' then
+			group.size = group.size + SIZES.bracket
+		elseif symbol == '/' then
+			group.size = group.size + SIZES.alter
+		else
+			group.size = group.size + SIZES.icon
+		end
+
+		prev = symbol
+	end
+
+	-- append last group
+	table.insert(group.sequence, '_')
+	group.size = group.size + SIZES.space
+	table.insert(groups, group)
+
+	return groups
+end
+
+function FoodRecipePopup:_FindZoom(groups)
+	local zoom, newzoom = 1, 1
+
+	while true do
+		local gwidth  = (SIZES.contw + SIZES.space) / zoom
+		local gheight = (SIZES.conth - SIZES.icon) / zoom -- add&sub space
+		local width, height = 0, 0
+		newzoom = 0
+
+		local found = true
+		local idx = 1
+
+		while idx < #groups do
+			local group = groups[idx]
+			width = width + group.size
+
+			if width - gwidth > EPSILON then -- overflow x
+				newzoom = math.max(newzoom, zoom * gwidth / width)
+
+				width = 0
+				height = height + SIZES.icon + SIZES.space
+
+				if height - gheight > EPSILON then -- overflow y
+					newzoom = math.max(newzoom, zoom * gheight / height)
+					found = false
+					break
+				end
+			else
+				idx = idx + 1
+			end
+		end-- while idx < #groups
+		if found then
+			return zoom
+		end
+		-- otherwise take newzoom and try again
+		zoom = newzoom
+	end -- while true
+end
+
+function FoodRecipePopup:_InsertComponent(wrapper, component, left, top)
+	local element
+	if type(component) == 'table' then
+		local is_min = true
+		element = FoodIngredientUI(component, is_min, self.owner)
+	else
+		element = self.contents:AddChild(Text(UIFONT, 42))
+		element:SetString(component)
+	end
+	element:SetPosition(left,top,0)
+	wrapper:AddChild(element)
+end
 
 function FoodRecipePopup:Refresh()
-
   local recipe = self.recipe
   local owner = self.owner
 
@@ -81,12 +241,6 @@ function FoodRecipePopup:Refresh()
   local center = 317
   local w = 64
   local div = 10
-
-  self._minfoodwrap = self.contents:AddChild(Widget(""))
-  self._minfoodwrap:SetPosition(center,115,0)
-
-  self._maxfoodwrap = self.contents:AddChild(Widget(""))
-  self._maxfoodwrap:SetPosition(center,-35,0)
 
   local foodwrap
   local ind
@@ -149,7 +303,7 @@ function FoodRecipePopup:Refresh()
 	              atlas = asset.file
 	            end
 	          end
-					ends
+					end
         else
           if TEX_TAGS[item_img] then
             atlas = self.tag_atlas

@@ -3,19 +3,20 @@ require "class"
 local Widget = require "widgets/widget"
 
 local TileBG = require "widgets/tilebg"
-local InventorySlot = require "widgets/invslot"ß
+local InventorySlot = require "widgets/invslot"
 local Image = require "widgets/image"
 local ImageButton = require "widgets/imagebutton"
 
 local TabGroup = require "widgets/tabgroup"
 local UIAnim = require "widgets/uianim"
 local Text = require "widgets/text"
-local FoodTile = require "widgets/foodtile"
+--local FoodTile = require "widgets/foodtile"
 local FoodRecipePopup = require "widgets/foodrecipepopup"
 
-local FoodCraftSlot = Class(Widget, function(self, owner, recipe, orientation)
-    Widget._ctor(self, "FoodCraftSlot")
+local FoodSlot = Class(Widget, function(self, owner, foodcrafting, slot_idx)
+    Widget._ctor(self, "FoodSlot")
     self.owner = owner
+		self.foodcrafting = foodcrafting
 
     self.atlas = HUD_ATLAS
     self.bgimage = self:AddChild(Image(self.atlas, "craft_slot.tex"))
@@ -23,67 +24,34 @@ local FoodCraftSlot = Class(Widget, function(self, owner, recipe, orientation)
 
     self.fgimage = self:AddChild(Image("images/hud.xml", "craft_slot_locked.tex"))
     self.fgimage:Hide()
+
+		self.slot_idx = slot_idx
 end)
 
---[[function FoodCraftSlot:OnGainFocus()
-    FoodCraftSlot._base.OnGainFocus(self)
-    self:Open()
+function FoodSlot:OnGainFocus()
+  FoodSlot._base.OnGainFocus(self)
+	if self.slot_idx then
+  	self.foodcrafting:FoodFocus(self.slot_idx)
+	end
 end
 
-function FoodCraftSlot:OnLoseFocus()
-    FoodCraftSlot._base.OnLoseFocus(self)
-    self:Close()
-end]]
-
-
-function FoodCraftSlot:Clear()
-    self.foodname = nil
-    self.recipe = nil
-    self.reqsmatch = false
-
-    if self.tile then
-        self.tile:Hide()
-    end
-
-    self.fgimage:Hide()
-    self.bgimage:SetTexture(HUD_ATLAS, "craft_slot.tex")
-    self:HideRecipe()
+function FoodSlot:ClearFood()
+	if self.fooditem then
+		self.fooditem:Hide()
+		self.fooditem = nil
+	end
 end
 
-function FoodCraftSlot:Open()
-    if self.recipepopup then
-        self.recipepopup:SetPosition(0,-20,0)
-    end
-    self.open = true
-    self:ShowRecipe()
-    self.owner.SoundEmitter:PlaySound("dontstarve/HUD/click_mouseover")
+function FoodSlot:SetFood(fooditem)
+	self.fooditem = fooditem
+	--print('1')
+	self.fooditem:SetPosition(self:GetPosition())
+	--print('2')
+	self.fooditem:Show()
+	--print("abd")
 end
 
-function FoodCraftSlot:Close()
-    self.open = false
-    self.locked = false
-    self:HideRecipe()
-end
-
-function FoodCraftSlot:ShowRecipe()
-    if self.recipe and self.recipepopup then
-        self.recipepopup:Show()
-        self.recipepopup:SetRecipe(self.recipe, self.owner)
-    end
-end
-
-function FoodCraftSlot:HideRecipe()
-    if self.recipepopup then
-        self.recipepopup:Hide()
-    end
-end
-
-function FoodCraftSlot:SetRecipe(recipe)
-  self:Show()
-	self:Refresh(recipe)
-end
-
-function FoodCraftSlot:Refresh()
+function FoodSlot:Refresh()
   local foodname = self.recipe.name
   local unlocked = self.recipe.unlocked
   local reqsmatch = self.recipe.reqsmatch
@@ -124,8 +92,8 @@ function FoodCraftSlot:Refresh()
 end
 
 
---[[function FoodCraftSlot:OnControl(control, down)
-  if FoodCraftSlot._base.OnControl(self, control, down) then return true end
+--[[function FoodSlot:OnControl(control, down)
+  if FoodSlot._base.OnControl(self, control, down) then return true end
 
   if not down and control == CONTROL_ACCEPT then
     if self.owner and self.recipe then
@@ -139,4 +107,4 @@ end
 end]]
 
 
-return FoodCraftSlot
+return FoodSlot

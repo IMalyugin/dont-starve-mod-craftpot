@@ -10,8 +10,7 @@ local KnownFoods = Class(function(self, owner)
   self._cookerRecipes = {} -- raw format recipes
   self._ingredients = {} -- all known ingredients
   self._alltags = {} -- all known tags
-  self._allnames ={} -- all known names
-  --self._oftenExcludedTags = {'meat','monster','veggie','frozen','inedible','eggs','fruit','sweetener','diary',''}
+  self._allnames = {} -- all known names
 
   self._aliases = {
   	cookedsmallmeat = "smallmeat_cooked",
@@ -49,23 +48,6 @@ function KnownFoods:SetCooker(inst)
   self._cookername = inst.prefab
 end
 
-
-function KnownFoods:_CopyTable(table)
-  local t = {}
-  for k,v in pairs(table) do
-    t[k] = v
-  end
-  return t
-end
-
-function KnownFoods:_CompareTables(t1, t2)
-  if #t1 ~= #t2 then return false end
-  for i=1,#t1 do
-    if t1[i] ~= t2[i] then return false end
-  end
-  return true
-end
-
 -- pcall wrapper, returns:
 --  1 for success,
 --  0 for fail,
@@ -92,7 +74,7 @@ function KnownFoods:_Composition(list) -- only compose 1 level, because otherwis
     end
     for tag, amt in pairs(recipe.tags) do
       --table.insert(branch,{tag=tag,amt=amt})
-      local key = 'n_'..tag..'_'..amt;
+      local key = 't_'..tag..'_'..amt;
       local used = sets[key] and sets[key].used or {}
       table.insert(used,idx)
       sets[key] = {mix={tag=tag,amt=amt},used=used}
@@ -122,9 +104,12 @@ function KnownFoods:_Composition(list) -- only compose 1 level, because otherwis
     for _, data in ipairs(uniques) do
       for _, uidx in ipairs(data.used) do
         if not alt[uidx] then
-          alt[uidx] = {}
+          alt[uidx] = data.mix
+				elseif alt[uidx].amt then
+					alt[uidx] = {alt[uidx], data.mix}
+				else
+			    table.insert(alt[uidx], data.mix)
         end
-        table.insert(alt[uidx], data.mix)
       end
     end
     table.insert(mix, alt)
@@ -462,7 +447,7 @@ function KnownFoods:MinimizeRecipe(foodname,recipe)
       if name ~= minname then
         minnames[name] = minnames[name] and minnames[name]+1 or 1
         if self:_ptest(test,minnames,mintags) == 1 then
-          table.insert(recipe.minlist, {names=deepcopy(minnames),tags=(mintags)})
+          table.insert(recipe.minlist, {names=deepcopy(minnames),tags=deepcopy(mintags)})
         --  print("Found an analog for "..foodname.." can use "..name.." instead of "..minname)
         end
         minnames[name] = minnames[name] > 1 and minnames[name]-1 or nil
@@ -473,7 +458,7 @@ function KnownFoods:MinimizeRecipe(foodname,recipe)
     for tag,_ in pairs(self._alltags) do
       mintags[tag] = mintags[tag] and mintags[tag]+1 or 1
       if self:_ptest(test,minnames,mintags) == 1 then
-        table.insert(recipe.minlist, {names=deepcopy(minnames),tags=(mintags)})
+        table.insert(recipe.minlist, {names=deepcopy(minnames),tags=deepcopy(mintags)})
         --print("Found an analog for "..foodname.." can use "..tag.." instead of "..minname)
       end
       mintags[tag] = mintags[tag] > 1 and mintags[tag]-1 or nil
@@ -491,7 +476,7 @@ function KnownFoods:MinimizeRecipe(foodname,recipe)
     for name,_ in pairs(self._allnames) do
       minnames[name] = minnames[name] and minnames[name]+1 or 1
       if self:_ptest(test,minnames,mintags) == 1 then
-        table.insert(recipe.minlist, {names=deepcopy(minnames),tags=(mintags)})
+        table.insert(recipe.minlist, {names=deepcopy(minnames),tags=deepcopy(mintags)})
       --  print("Found an analog for "..foodname.." can use "..name.." instead of "..mintag)
       end
       minnames[name] = minnames[name] > 1 and minnames[name]-1 or nil
@@ -502,7 +487,7 @@ function KnownFoods:MinimizeRecipe(foodname,recipe)
       if tag ~= mintag then
         mintags[tag] = mintags[tag] and mintags[tag]+1 or 1
         if self:_ptest(test,minnames,mintags) == 1 then
-          table.insert(recipe.minlist, {names=deepcopy(minnames),tags=(mintags)})
+          table.insert(recipe.minlist, {names=deepcopy(minnames),tags=deepcopy(mintags)})
         --  print("Found an analog for "..foodname.." can use "..tag.." instead of "..mintag)
         end
         mintags[tag] = mintags[tag] > 1 and mintags[tag]-1 or nil
@@ -513,7 +498,12 @@ function KnownFoods:MinimizeRecipe(foodname,recipe)
   end
 
   --print("~~ minlist prior = "..#recipe.minlist)
-  recipe.minmix = self:_Composition(recipe.minlist)
+	if recipe.cookername == 'cookpot' then
+  	recipe.minmix = self:_Composition(recipe.minlist)
+		recipe.maxmix = self:_Composition({{names=recipe.maxnames, tags=recipe.maxtags}})
+	else
+		return false
+	end
   --print("~~ minmix between = "..#recipe.minmix)
   --recipe.minlist = self:_Decomposition(recipe.minmix)
   --print("~~ minlist after = "..#recipe.minlist)
@@ -582,77 +572,8 @@ function KnownFoods:IncrementCookCounter(foodname)
   self.owner.HUD.controls.foodcrafting:UpdateRecipes()
 end
 
-function KnownFoods:GetIngredientValues(prefablist)
-	local names = {}
-	local tags = {}
-	for k,v in pairs(prefablist) do
-		local name = self._aliases[v] or v
-		names[name] = names[name] and names[name] + 1 or 1
-
-		if self._ingredients[name] then
-			for kk, vv in pairs(self._ingredients[name].tags) do
-				tags[kk] = tags[kk] and tags[kk] + vv or vv
-			end
-		end
-	end
-
-	return {tags = tags, names = names}
-end
-
-function KnownFoods:GetCookerIngredientValues()
-  local ings = {}
-  for k,v in pairs(self._cooker.components.container.slots) do
-    table.insert(ings, v.prefab)
-  end
-  return self:GetIngredientValues(ings), #ings
-end
-
-function KnownFoods:GetCookBook()
-  local recipes = self._knownfoods
-
-  local ingdata,num_ing = self:GetCookerIngredientValues()
-  local cook_priority = -9999
-  for foodname, recipe in pairs(recipes) do
-    recipes[foodname].reqsmatch = false -- all the min requirements are met
-    recipes[foodname].reqsmismatch = false -- all the max requirements are met
-    recipes[foodname].readytocook = false -- all ingredients match recipe and cookpot is loaded
-    recipes[foodname].specialcooker = recipe.cookername ~= self._basiccooker -- does the recipe require special cooker
-    recipes[foodname].correctcooker = not recipe.specialcooker or recipe.cookername == self._cookername
-    recipes[foodname].unlocked = not self._config.lock_uncooked or recipe.times_cooked and recipe.times_cooked > 0
-
-    --recipes[foodname].unlocked = false
-
-    if not self:_TestMax(foodname, ingdata.names, ingdata.tags) then
-      recipes[foodname].reqsmismatch = true
-    end
-
-    if self:_Test(foodname, ingdata.names, ingdata.tags) then
-      recipes[foodname].reqsmatch = true
-      if num_ing == 4 and recipe.correctcooker then
-        recipes[foodname].readytocook = true
-        if recipe.priority > cook_priority then
-          cook_priority = recipe.priority
-        end
-      end
-    end
-
-    recipes[foodname].hide = num_ing > 0 and (not recipe.correctcooker or recipe.reqsmismatch)
-  end
-
-  if num_ing == 4 then -- show only dishes that have chance of cooking
-    for foodname, recipe in pairs(recipes) do
-      if recipe.readytocook then
-         if recipe.priority < cook_priority then
-           recipes[foodname].readytocook = false
-           recipes[foodname].hide = true
-         end
-      else
-        recipes[foodname].hide = true
-      end
-    end
-  end
-
-  return recipes
+function KnownFoods:GetKnownFoods()
+  return self._knownfoods
 end
 
 return KnownFoods

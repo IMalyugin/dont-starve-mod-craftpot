@@ -16,7 +16,8 @@ local SIZES = {
 	space = 10,
 	alter = 30,
 	bracket = 15,
-	contw = 286,
+--	contw = 286,
+	contw = 192,
 	conth = 100
 }
 local EPSILON = 0.01
@@ -50,6 +51,8 @@ local FoodRecipePopup = Class(Widget, function(self, owner, recipe)
       self.name:EnableWordWrap(true)
     end
 
+		local localized_foodname = STRINGS.NAMES[string.upper(self.recipe.name)] or recipe.name
+	  self.name:SetString(localized_foodname)
 
     if JapaneseOnPS4() then
       self.excludes_title = self.contents:AddChild(Text(UIFONT, 32 * 0.8))
@@ -67,46 +70,61 @@ local FoodRecipePopup = Class(Widget, function(self, owner, recipe)
 
 		local center = 317
 		self._minwrap = self.contents:AddChild(Widget(""))
-		self._minwrap:SetPosition(center,115,0)
+		self._minwrap:SetPosition(center-SIZES.contw/2,115,0)
 
 		self._maxwrap = self.contents:AddChild(Widget(""))
-		self._maxwrap:SetPosition(center,-35,0)
+		self._maxwrap:SetPosition(center-SIZES.contw/2,-35,0)
 
     --self.maxing = {min={},max={}}
+		self.item1 = self.contents:AddChild(Text(UIFONT, 32 * 0.8))
+		self.item1:SetPosition(center-SIZES.contw/2,-35,0)
+		self.item1:SetString('*')
 
-		self:_CreateLayout(self._minwrap, self.recipe.minmix)
-		self:_CreateLayout(self._maxwrap, self.recipe.maxmix)
+		self.item2 = self.contents:AddChild(Text(UIFONT, 32 * 0.8))
+		self.item2:SetPosition(center+SIZES.contw/2,-35,0)
+		self.item2:SetString('*')
+
+		self:_CreateLayout(self._minwrap, self.recipe.minmix, true)
+		self:_CreateLayout(self._maxwrap, self.recipe.maxmix, false)
 end)
 
-function FoodRecipePopup:_CreateLayout(wrapper, mix)
+function FoodRecipePopup:_CreateLayout(wrapper, mix, is_min)
 	local sequence = self:_BuildSequence(mix, {})
 	local groups = self:_BuildGroups(sequence)
 	local zoom = self:_FindZoom(groups)
+	print('zoom: '..zoom)
 
 	local gwidth  = (SIZES.contw + SIZES.space) / zoom
 	local left, top = 0, 0
 
 	for idx,group in ipairs(groups) do
 		-- insert element
-		local offset = 0
+		local offset
+		local component_size = 0
+		offset = 0
 		for _,component in ipairs(group.sequence) do
+
 			if component == '(' or component == ')' then
-				offset = offset + SIZES.bracket
+				component_size = SIZES.bracket
 			elseif component == '/' then
-				offset = offset + SIZES.alter
+				component_size = SIZES.alter
+			elseif component == '_' then
+				component_size = SIZES.space
 			else
-				offset = offset + SIZES.icon
+				component_size = SIZES.icon
 			end
-			self:_InsertComponent(wrapper,component,left+offset,top)
+			offset = offset + component_size
+			self:_InsertComponent(wrapper,component,left+offset-component_size/2,top,is_min)
 		end
 
 		left = left + group.size
-
 		if left > gwidth + EPSILON then -- overflow x
+			print("Reset")
 			left = 0
 			top = top + SIZES.icon + SIZES.space
 		end
 	end -- groups
+	wrapper:SetScale(zoom,zoom,zoom)
 end
 
 function FoodRecipePopup:_BuildSequence(mix, arr)
@@ -212,10 +230,9 @@ function FoodRecipePopup:_FindZoom(groups)
 	end -- while true
 end
 
-function FoodRecipePopup:_InsertComponent(wrapper, component, left, top)
+function FoodRecipePopup:_InsertComponent(wrapper, component, left, top, is_min)
 	local element
 	if type(component) == 'table' then
-		local is_min = true
 		element = FoodIngredientUI(component, is_min, self.owner)
 	else
 		element = self.contents:AddChild(Text(UIFONT, 42))
@@ -225,7 +242,7 @@ function FoodRecipePopup:_InsertComponent(wrapper, component, left, top)
 	wrapper:AddChild(element)
 end
 
-function FoodRecipePopup:Refresh()
+--[[function FoodRecipePopup:Refresh()
   local recipe = self.recipe
   local owner = self.owner
 
@@ -331,13 +348,13 @@ function FoodRecipePopup:Refresh()
       end
     end
   end
-end
+end]]
 
 
-function FoodRecipePopup:SetRecipe(recipe, owner)
+--[[function FoodRecipePopup:SetRecipe(recipe, owner)
     self.recipe = recipe
     self.owner = owner
     self:Refresh()
-end
+end]]
 
 return FoodRecipePopup

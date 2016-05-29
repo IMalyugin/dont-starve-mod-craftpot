@@ -97,7 +97,7 @@ end
 function FoodCrafting:FoodFocus(slot_idx)
 	print(slot_idx..' - '..self.idx)
 	local focusIdx = slot_idx+self.idx
-	if focusIdx > #self.selfoods then
+	if focusIdx > #self.selfoods+1 then
 		print("out of range")
 		return false
 	end
@@ -173,8 +173,8 @@ function FoodCrafting:UpdateFoodSlots()
 		foodslot:ClearFood()
 	end
 
-	if self.idx > #self.selfoods - (self.num_slots )  then
-		self.idx = #self.selfoods - (self.num_slots)
+	if self.idx > #self.selfoods - (self.num_slots )+1  then
+		self.idx = #self.selfoods - (self.num_slots)+1
 	end
 
   if self.idx < -1 then
@@ -187,7 +187,7 @@ function FoodCrafting:UpdateFoodSlots()
 		self.downbutton:Disable()
 	end
 
-	if #self.selfoods < self.idx + self.num_slots+1 then
+	if #self.selfoods <= self.idx + self.num_slots+2 then
 		self.upbutton:Disable()
     else
 		self.upbutton:Enable()

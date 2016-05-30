@@ -100,7 +100,15 @@ local function CookerPostInit(inst)
 	inst:ListenForEvent("itemlose", cookerchangefn)
 end
 
+local function FollowCameraPostInit(inst)
+	local old_can_control = inst.CanControl
+	inst.CanControl = function(inst)
+		return old_can_control(inst) and not GetPlayer().HUD.controls.foodcrafting:IsFocused()
+	end
+end
 
+-- follow camera modification is required to cancel the scrolling
+AddClassPostConstruct("cameras/followcamera", FollowCameraPostInit)
 AddPlayerPostInit(OnLoad)
 
 -- these two loads race each other, last one gets to launch OnAfterLoad

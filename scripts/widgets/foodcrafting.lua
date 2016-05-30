@@ -27,6 +27,7 @@ local FoodCrafting = Class(Widget, function(self, num_slots, owner)
 	self.focusitem = nil
 	self.invIngs = nil -- ingredient values of all the items stored in player inventory
 	self.cookerIngs = nil -- ingredient values of items put into the cooker
+	self._focused = false -- widget focus status, required for the camera to stop zooming
 
 	self.idx = -1
 
@@ -37,6 +38,7 @@ local FoodCrafting = Class(Widget, function(self, num_slots, owner)
 		table.insert(self.foodslots, foodslot)
 		self:AddChild(foodslot)
 	end
+
 end)
 
 function FoodCrafting:OnAfterLoad()
@@ -252,17 +254,21 @@ end
 
 function FoodCrafting:OnGainFocus()
   FoodCrafting._base.OnGainFocus(self)
-	TheCamera:SetControllable(false)
+	self._focused = true
 end
 
 function FoodCrafting:OnLoseFocus()
   FoodCrafting._base.OnLoseFocus(self)
-	TheCamera:SetControllable(true)
+	self._focused = false
 
 	if self.focusItem then
 		self.focusItem:HidePopup()
 		self.focusItem = nil
 	end
+end
+
+function FoodCrafting:IsFocused()
+	return self._focused
 end
 
 function FoodCrafting:_RefreshFoodStats()

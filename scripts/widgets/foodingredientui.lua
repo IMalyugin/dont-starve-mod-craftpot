@@ -64,10 +64,9 @@ local FoodIngredientUI = Class(Widget, function(self, element, is_min, owner) --
   end
   self.quant:SetPosition(7,-32, 0)
 
-
 	-- initialize name
   self:SetTooltip(self.localized_name)
-  self:SetClickable(false)
+  --self:SetClickable(false)
 end)
 
 function FoodIngredientUI:DefineAssetData()
@@ -109,7 +108,7 @@ function FoodIngredientUI:Update(on_hand)
 	self.quant:SetString(string.format(self.mask, on_hand, self.quantity))
 end
 
-function FoodIngredientUI:SetValid(valid)
+function FoodIngredientUI:_SetValid(valid)
 	if valid then
 		self.valid_bg:Show()
 		self.invalid_bg:Hide()

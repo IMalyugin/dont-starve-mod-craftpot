@@ -13,12 +13,12 @@ local FoodIngredientUI = require "widgets/foodingredientui"
 
 local SIZES = {
 	icon = 64,
-	space = 10,
-	alter = 30,
+	space = 8,
+	alter = 10,
 	bracket = 15,
 --	contw = 286,
-	contw = 192,
-	conth = 100
+	contw = 210,
+	conth = 105
 }
 local EPSILON = 0.01
 
@@ -27,6 +27,7 @@ local FoodRecipePopup = Class(Widget, function(self, owner, recipe)
 
 		self.owner = owner
 		self.recipe = recipe
+		self.ingredients = {}
 
     local hud_atlas = resolvefilepath( "images/recipe_hud.xml" )
     --self.atlas = resolvefilepath("images/inventoryimages.xml")
@@ -70,43 +71,43 @@ local FoodRecipePopup = Class(Widget, function(self, owner, recipe)
 
 		local center = 317
 		self._minwrap = self.contents:AddChild(Widget(""))
-		self._minwrap:SetPosition(center-SIZES.contw/2,115,0)
+		self._minwrap:SetPosition(center,115,0)
 
 		self._maxwrap = self.contents:AddChild(Widget(""))
-		self._maxwrap:SetPosition(center-SIZES.contw/2,-35,0)
-
-    --self.maxing = {min={},max={}}
-		self.item1 = self.contents:AddChild(Text(UIFONT, 32 * 0.8))
-		self.item1:SetPosition(center-SIZES.contw/2,-35,0)
-		self.item1:SetString('*')
-
-		self.item2 = self.contents:AddChild(Text(UIFONT, 32 * 0.8))
-		self.item2:SetPosition(center+SIZES.contw/2,-35,0)
-		self.item2:SetString('*')
+		self._maxwrap:SetPosition(center,-35,0)
 
 		self:_CreateLayout(self._minwrap, self.recipe.minmix, true)
 		self:_CreateLayout(self._maxwrap, self.recipe.maxmix, false)
 end)
 
+function FoodRecipePopup:Update()
+	for _, ui in ipairs(ingredients) do
+		ui:Update()
+	end
+end
+
 function FoodRecipePopup:_CreateLayout(wrapper, mix, is_min)
 	local sequence = self:_BuildSequence(mix, {})
 	local groups = self:_BuildGroups(sequence)
-	local zoom = self:_FindZoom(groups)
-	print('zoom: '..zoom)
+	local zoom,linewidth = self:_FindZoom(groups)
 
-	local gwidth  = (SIZES.contw + SIZES.space) / zoom
+	local gwidth  = SIZES.contw / zoom
 	local left, top = 0, 0
 
 	for idx,group in ipairs(groups) do
 		-- insert element
-		local offset
+		local offset = 0
 		local component_size = 0
-		offset = 0
-		for _,component in ipairs(group.sequence) do
 
+		if left + group.size > gwidth + EPSILON then -- overflow x
+			left = 0
+			top = top - SIZES.icon - SIZES.space
+		end
+
+		for _,component in ipairs(group.sequence) do
 			if component == '(' or component == ')' then
 				component_size = SIZES.bracket
-			elseif component == '/' then
+			elseif component == ',' then
 				component_size = SIZES.alter
 			elseif component == '_' then
 				component_size = SIZES.space
@@ -114,16 +115,15 @@ function FoodRecipePopup:_CreateLayout(wrapper, mix, is_min)
 				component_size = SIZES.icon
 			end
 			offset = offset + component_size
-			self:_InsertComponent(wrapper,component,left+offset-component_size/2,top,is_min)
+			if component ~= '_' then
+				self:_InsertComponent(wrapper,component,left+offset-(type(component) == 'table' and component_size/2 or 0),top-SIZES.icon/2,is_min)
+			end
 		end
 
-		left = left + group.size
-		if left > gwidth + EPSILON then -- overflow x
-			print("Reset")
-			left = 0
-			top = top + SIZES.icon + SIZES.space
-		end
+		left = left + group.size + SIZES.space
+
 	end -- groups
+	wrapper:SetPosition(wrapper:GetPosition() - Vector3(linewidth/2,0,0))
 	wrapper:SetScale(zoom,zoom,zoom)
 end
 
@@ -138,7 +138,7 @@ function FoodRecipePopup:_BuildSequence(mix, arr)
 			end
 			for aid, alt in ipairs(conj) do
 				if aid > 1 then
-					table.insert(arr, '/') -- or
+					table.insert(arr, ',') -- or
 				end
 				if alt.amt then
 					table.insert(arr, alt) -- icon of alternation
@@ -160,21 +160,16 @@ function FoodRecipePopup:_BuildGroups(sequence)
 	local prev = '^'
 
 	for idx, symbol in ipairs(sequence) do
-		-- insert space before symbol unless near a bracket
-		if prev ~= '^' and (symbol ~= ')' and prev ~= '(') then
-			table.insert(group.sequence, '_')
-			group.size = group.size + SIZES.space
-			-- if space was inserted and not after 'or' symbol, the group is finished
-			if prev ~= '/' then
+		-- possible group end, unless near a bracket or comma
+		if prev ~= '^' and (symbol ~= ')' and prev ~= '(') and symbol ~= ',' then
 				table.insert(groups, group)
 				group = {sequence={}, size=0}
-			end
 		end
 
 		table.insert(group.sequence, symbol)
 		if symbol == '(' or symbol == ')' then
 			group.size = group.size + SIZES.bracket
-		elseif symbol == '/' then
+		elseif symbol == ',' then
 			group.size = group.size + SIZES.alter
 		else
 			group.size = group.size + SIZES.icon
@@ -184,46 +179,48 @@ function FoodRecipePopup:_BuildGroups(sequence)
 	end
 
 	-- append last group
-	table.insert(group.sequence, '_')
-	group.size = group.size + SIZES.space
+	--table.insert(group.sequence, '_')
+	--group.size = group.size + SIZES.space
 	table.insert(groups, group)
 
 	return groups
 end
 
+-- retuns zoom, maxwidth
 function FoodRecipePopup:_FindZoom(groups)
-	local zoom, newzoom = 1, 1
+	local zoom, newzoom, maxwidth = 1, 0, 0
 
 	while true do
-		local gwidth  = (SIZES.contw + SIZES.space) / zoom
-		local gheight = (SIZES.conth - SIZES.icon) / zoom -- add&sub space
-		local width, height = 0, 0
-		newzoom = 0
+		local gwidth  = SIZES.contw / zoom
+		local gheight = SIZES.conth / zoom -- add&sub space
+		local width,height = 0,SIZES.icon
+
+		newzoom, maxwidth = 0, 0
 
 		local found = true
 		local idx = 1
 
-		while idx < #groups do
+		while idx <= #groups do
 			local group = groups[idx]
 			width = width + group.size
 
-			if width - gwidth > EPSILON then -- overflow x
+			if width > gwidth + EPSILON then -- overflow x
 				newzoom = math.max(newzoom, zoom * gwidth / width)
-
 				width = 0
 				height = height + SIZES.icon + SIZES.space
-
-				if height - gheight > EPSILON then -- overflow y
+				if height > gheight + EPSILON then -- overflow y
 					newzoom = math.max(newzoom, zoom * gheight / height)
 					found = false
 					break
 				end
 			else
+				maxwidth = math.max(maxwidth, zoom * width)
+				width = width + SIZES.space
 				idx = idx + 1
 			end
 		end-- while idx < #groups
 		if found then
-			return zoom
+			return zoom,maxwidth
 		end
 		-- otherwise take newzoom and try again
 		zoom = newzoom
@@ -231,14 +228,26 @@ function FoodRecipePopup:_FindZoom(groups)
 end
 
 function FoodRecipePopup:_InsertComponent(wrapper, component, left, top, is_min)
-	local element
+	local element, fontsize, fontfamily
 	if type(component) == 'table' then
 		element = FoodIngredientUI(component, is_min, self.owner)
+		element:SetPosition(left,top,0)
+		table.insert(self.ingredients, element)
 	else
-		element = self.contents:AddChild(Text(UIFONT, 42))
+		if component == ',' then
+			fontsize = 73
+			top = top - 8
+			left = left + 2
+			fontfamily = DEFAULTFONT
+		else
+			fontsize = 73
+			top = top - 8
+			fontfamily = UIFONT
+		end
+		element = self.contents:AddChild(Text(fontfamily, fontsize))
 		element:SetString(component)
+		element:SetPosition(left,top,0)
 	end
-	element:SetPosition(left,top,0)
 	wrapper:AddChild(element)
 end
 

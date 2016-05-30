@@ -187,7 +187,7 @@ function FoodCrafting:UpdateFoodSlots()
 		self.downbutton:Disable()
 	end
 
-	if #self.selfoods <= self.idx + self.num_slots+2 then
+	if #self.selfoods < self.idx + self.num_slots then
 		self.upbutton:Disable()
     else
 		self.upbutton:Enable()

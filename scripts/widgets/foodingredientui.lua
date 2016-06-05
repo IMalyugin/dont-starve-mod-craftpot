@@ -69,6 +69,10 @@ local FoodIngredientUI = Class(Widget, function(self, element, is_min, owner) --
   --self:SetClickable(false)
 end)
 
+function FoodIngredientUI:GetIngredient()
+	return self.alias, self.is_name and 'name' or 'tag'
+end
+
 function FoodIngredientUI:DefineAssetData()
 	self.item_tex = self.alias..'.tex'
 	self.atlas = resolvefilepath("images/inventoryimages.xml")
@@ -103,6 +107,7 @@ function FoodIngredientUI:DefineAssetData()
 end
 
 function FoodIngredientUI:Update(on_hand)
+	--print(on_hand)
   local valid = (self.is_min and (on_hand >= self.quantity)) or (not self.is_min and (on_hand <= self.quantity))
 	self:_SetValid(valid)
 	self.quant:SetString(string.format(self.mask, on_hand, self.quantity))

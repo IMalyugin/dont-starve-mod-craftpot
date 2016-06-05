@@ -11,10 +11,12 @@ local ImageButton = require "widgets/imagebutton"
 --local Text = require "widgets/text"
 local FoodSlot = require "widgets/foodslot"--mod
 local FoodItem = require "widgets/fooditem"--mod
+local Cooking = require "cooking"
 local FoodCrafting = Class(Widget, function(self, num_slots, owner)
   Widget._ctor(self, "FoodCrafting")
 
 	self.owner = owner
+	self.knownfoods = self.owner.components.knownfoods
 
   self.bg = self:AddChild(TileBG(HUD_ATLAS, "craft_slotbg.tex"))
 
@@ -28,28 +30,40 @@ local FoodCrafting = Class(Widget, function(self, num_slots, owner)
 	self.invIngs = nil -- ingredient values of all the items stored in player inventory
 	self.cookerIngs = nil -- ingredient values of items put into the cooker
 	self._focused = false -- widget focus status, required for the camera to stop zooming
+  --self._basiccooker = 'cookpot' -- name of basic cooker
+
+	self._ingredients = Cooking.ingredients
+  self._aliases = { -- cooking ingredient alias mismatch
+  	cookedsmallmeat = "smallmeat_cooked",
+  	cookedmonstermeat = "monstermeat_cooked",
+  	cookedmeat = "meat_cooked"
+  }
 
 	self.idx = -1
 
   self.open = false
-
-	for slot_idx=1,num_slots do
-		local foodslot = FoodSlot(self.owner, self, slot_idx)
-		table.insert(self.foodslots, foodslot)
-		self:AddChild(foodslot)
-	end
-
 end)
 
-function FoodCrafting:OnAfterLoad()
+function FoodCrafting:OnAfterLoad(config)
+  self._config = config
+	local slot_bgs = {}
+	for slot_idx=1,self.num_slots do
+		table.insert(slot_bgs, self:AddChild(Image(nil)) )
+	end
   --- create all the recipes
-  local recipes = self.owner.components.knownfoods:GetKnownFoods()
+  local recipes = self.knownfoods:GetKnownFoods()
   for foodname, recipe in pairs(recipes) do
     local fooditem = FoodItem(self.owner, self, recipe)
     table.insert(self.allfoods, fooditem)
     self:AddChild(fooditem)
 		fooditem:Hide()
   end
+
+	for slot_idx=1,self.num_slots do
+		local foodslot = FoodSlot(self.owner, self, slot_idx, slot_bgs[slot_idx])
+		table.insert(self.foodslots, foodslot)
+		self:AddChild(foodslot)
+	end
 
 	--buttons
   self.downbutton = self:AddChild(ImageButton(HUD_ATLAS, "craft_end_normal.tex", "craft_end_normal_mouseover.tex", "craft_end_normal_disabled.tex"))
@@ -58,6 +72,11 @@ function FoodCrafting:OnAfterLoad()
   self.upbutton:SetOnClick(function() self:ScrollUp() end)
 
 	self:SetOrientation(false) -- only vertical for now
+
+	-- late foreground init is required to overlay it on top of the food icon
+	for _,foodslot in ipairs(self.foodslots) do
+		foodslot:InitForeground()
+	end
 end
 
 function FoodCrafting:SetOrientation(horizontal)
@@ -80,6 +99,7 @@ function FoodCrafting:SetOrientation(horizontal)
     for k,foodslot in ipairs(self.foodslots) do
       local slotpos = self.bg:GetSlotPos(k)
       foodslot:SetPosition( slotpos.x,slotpos.y,slotpos.z )
+			foodslot.bgimage:SetPosition( slotpos.x,slotpos.y,slotpos.z )
     end
 
     local but_w, but_h = self.downbutton:GetSize()
@@ -97,13 +117,12 @@ function FoodCrafting:SetOrientation(horizontal)
 end
 
 function FoodCrafting:FoodFocus(slot_idx)
-	print(slot_idx..' - '..self.idx)
+	--print(slot_idx..' - '..self.idx)
 	local focusIdx = slot_idx+self.idx
-	if focusIdx > #self.selfoods+1 then
-		print("out of range")
+	if focusIdx <= 0 or focusIdx > #self.selfoods then
 		return false
 	end
-	local focusItem = self.selfoods[slot_idx+self.idx]
+	local focusItem = self.selfoods[focusIdx]
 	if focusItem == self.focusItem then
 		return
 	end
@@ -113,12 +132,13 @@ function FoodCrafting:FoodFocus(slot_idx)
 	end
 	self.focusItem = focusItem
 
-	self.focusItem:ShowPopup(self.cookerIngs, self.invIngs)
+	self.focusItem:ShowPopup(self.cookerIngs)
 	self.focusIdx = slot_idx
 end
 
 function FoodCrafting:Open(cooker_inst)
 	self._cooker = cooker_inst
+	self._cookername = cooker_inst.prefab
 
   self._open = true
 	self:Enable()
@@ -138,12 +158,13 @@ end
 -- only this function can be called from the outside
 function FoodCrafting:SortFoods()
 	if not self._open then return end
-	print ("---sortfoods")
 
-	--self:_RefreshFoodStats()
-
+	local ingdata,num_ing = self:_GetContainerIngredientValues(self._cooker.components.container)
+	self.cookerIngs = ingdata
+	self.invIngs = nil
+	self:_RefreshFoodStats(ingdata,num_ing)
 	-- do nothing for now
-	--[[table.sort(self.allfoods, function(a,b)
+	table.sort(self.allfoods, function(a,b)
     if a.recipe.correctcooker ~= b.recipe.correctcooker then return a.recipe.correctcooker end
     if a.recipe.readytocook ~= b.recipe.readytocook then return a.recipe.readytocook end
     if b.recipe.name == "wetgoop" then return true elseif a.recipe.name == "wetgoop" then return false end
@@ -152,19 +173,21 @@ function FoodCrafting:SortFoods()
     if a.recipe.unlocked ~= b.recipe.unlocked then return a.recipe.unlocked end
     if a.recipe.reqsmismatch ~= b.recipe.reqsmismatch then return a.recipe.reqsmismatch end
     return a.recipe.priority > b.recipe.priority
-  end)]]
+  end)
 	self:FilterFoods()
 end
 
 function FoodCrafting:FilterFoods()
 	self.selfoods = {}
-
+	-- define filterfn
 	for idx, fooditem in ipairs(self.allfoods) do
-		if not self.filterFn or self.filterFn(fooditem) then
+		--if not self.filterFn or self.filterFn(fooditem) then
 			if self._cooker.prefab == 'cookpot' or fooditem.recipe.cookername == self._cooker.prefab then
-				table.insert(self.selfoods, fooditem)
+				if not fooditem.recipe.hide then
+					table.insert(self.selfoods, fooditem)
+				end
 			end
-		end
+		--end
 	end
 
 	self:UpdateFoodSlots()
@@ -199,19 +222,24 @@ function FoodCrafting:UpdateFoodSlots()
 		local foodidx = idx + self.idx
 		--print("looper")
 		if foodidx > 0 and foodidx <= #self.selfoods then
-			--print("setfood="..idx..":"..foodidx)
+		--	print("setfood="..idx..":"..foodidx)
 			self.foodslots[idx]:SetFood(self.selfoods[foodidx])
-			--print('woot')
+		--	print('woot')
 			self.selfoods[foodidx]:SetSlot(self.foodslots[idx])
-			--print('what')
+		--	print('what')
 		end
 	end
 	--print("afterlooper")
 
 	if self.focusItem then
 		self.focusItem:HidePopup()
-		self.focusItem = self.selfoods[self.focusIdx+self.idx]
-		self.focusItem:ShowPopup()
+		local focusIdx = self.focusIdx + self.idx
+		if focusIdx > 0 and focusIdx <= #self.selfoods then
+			self.focusItem = self.selfoods[self.focusIdx+self.idx]
+			self.focusItem:ShowPopup(self.cookerIngs)
+		else
+			self.focusItem = nil
+		end
 	end
 end
 
@@ -261,51 +289,36 @@ function FoodCrafting:OnLoseFocus()
   FoodCrafting._base.OnLoseFocus(self)
 	self._focused = false
 
-	if self.focusItem then
+	--[[if self.focusItem then
 		self.focusItem:HidePopup()
 		self.focusItem = nil
-	end
+	end]]
 end
 
 function FoodCrafting:IsFocused()
 	return self._focused
 end
 
-function FoodCrafting:_RefreshFoodStats()
-	local ingdata,num_ing = self:_GetContainerIngredientValues(self._cooker.components.container)
-
-	self.cookerIngs = ingdata
-	self.invIngs = nil
-
+function FoodCrafting:_RefreshFoodStats(ingdata, num_ing)
 	local cook_priority = -9999
 	for idx, fooditem in ipairs(self.allfoods) do
 		local recipe = fooditem.recipe
-		recipe.reqsmatch = false -- all the min requirements are met
-		recipe.reqsmismatch = false -- all the max requirements are met
-		recipe.readytocook = false -- all ingredients match recipe and cookpot is loaded
-		recipe.specialcooker = recipe.cookername ~= self._basiccooker -- does the recipe require special cooker
+		self.knownfoods:UpdateRecipe(recipe, ingdata)
+
 		recipe.correctcooker = not recipe.specialcooker or recipe.cookername == self._cookername
-		recipe.unlocked = not self._config.lock_uncooked or recipe.times_cooked and recipe.times_cooked > 0
-
-		if not self:_TestMax(recipe.name, ingdata.names, ingdata.tags) then
-			recipe.reqsmismatch = true
-		end
-
-		if self:_Test(recipe.name, ingdata.names, ingdata.tags) then
-			recipe.reqsmatch = true
-			if num_ing == 4 and recipe.correctcooker then
-				recipe.readytocook = true
-				if recipe.priority > cook_priority then
-					cook_priority = recipe.priority
-				end
+		if num_ing == 4 and recipe.correctcooker and recipe.reqsmatch then
+			recipe.readytocook = true
+			if recipe.priority > cook_priority then
+				cook_priority = recipe.priority
 			end
 		end
 
 		recipe.hide = num_ing > 0 and (not recipe.correctcooker or recipe.reqsmismatch)
 	end
 
-	if num_ing == 4 then -- show only dishes that have chance of cooking
-		for idx, fooditem in ipairs(self.allfoods) do
+	for idx, fooditem in ipairs(self.allfoods) do
+		local recipe = fooditem.recipe
+		if num_ing == 4 then -- show only dishes that have chance of cooking
 			if recipe.readytocook then
 				 if recipe.priority < cook_priority then
 					 recipe.readytocook = false
@@ -324,7 +337,6 @@ function FoodCrafting:_GetIngredientValues(prefablist)
 	for k,v in pairs(prefablist) do
 		local name = self._aliases[v] or v
 		names[name] = names[name] and names[name] + 1 or 1
-
 		if self._ingredients[name] then
 			for kk, vv in pairs(self._ingredients[name].tags) do
 				tags[kk] = tags[kk] and tags[kk] + vv or vv

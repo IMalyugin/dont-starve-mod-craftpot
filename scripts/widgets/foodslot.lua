@@ -13,53 +13,73 @@ local Text = require "widgets/text"
 --local FoodTile = require "widgets/foodtile"
 local FoodRecipePopup = require "widgets/foodrecipepopup"
 
-local FoodSlot = Class(Widget, function(self, owner, foodcrafting, slot_idx)
+-- Overlay ordering:
+--  foodcrafting->bgimage
+--  fooditem->tile
+--  foodslot->fgimage
+local FoodSlot = Class(Widget, function(self, owner, foodcrafting, slot_idx, bgimage)
     Widget._ctor(self, "FoodSlot")
     self.owner = owner
 		self.foodcrafting = foodcrafting
 
     self.atlas = HUD_ATLAS
-    self.bgimage = self:AddChild(Image(self.atlas, "craft_slot.tex"))
-    self.reqsmatch = false
 
-    self.fgimage = self:AddChild(Image("images/hud.xml", "craft_slot_locked.tex"))
-    self.fgimage:Hide()
+		self.bgimage = bgimage
+		self.bgimage:SetTexture(self.atlas, "craft_slot.tex")
+		self.fgimage = self:AddChild(Image("images/hud.xml", "craft_slot_locked.tex"))
+		self.fgimage:Hide()
+
+		self.reqsmatch = false
 
 		self.slot_idx = slot_idx
+		self:ClearFood()
 end)
+
+-- foreground is initialized later to overlay the slot icons, also childs are added to root class
+function FoodSlot:InitForeground()
+end
 
 function FoodSlot:OnGainFocus()
   FoodSlot._base.OnGainFocus(self)
 	if self.slot_idx then
   	self.foodcrafting:FoodFocus(self.slot_idx)
+		print("foodname:"..self.fooditem.recipe.name)
+		print("correctcooker:"..(self.fooditem.recipe.correctcooker and '1' or '0'))
+		print("readytocook:"..(self.fooditem.recipe.readytocook and '1' or '0'))
+		print("reqsmatch:"..(self.fooditem.recipe.reqsmatch and '1' or '0'))
+		print("reqsmismatch:"..(self.fooditem.recipe.reqsmismatch and '1' or '0'))
+		print("unlocked:"..(self.fooditem.recipe.unlocked and '1' or '0'))
+		print("priority:"..self.fooditem.recipe.priority)
 	end
 end
 
 function FoodSlot:ClearFood()
 	if self.fooditem then
 		self.fooditem:Hide()
-		self.fooditem = nil
 	end
+	self.bgimage:SetTexture(self.atlas, "craft_slot.tex")
+	self.fgimage:Hide()
+	self.fooditem = nil
 end
 
 function FoodSlot:SetFood(fooditem)
 	self.fooditem = fooditem
-	--print('1')
 	self.fooditem:SetPosition(self:GetPosition())
-	--print('2')
 	self.fooditem:Show()
-	--print("abd")
+	self.fooditem:Refresh()
+	self:Refresh()
 end
 
 function FoodSlot:Refresh()
-  local foodname = self.recipe.name
-  local unlocked = self.recipe.unlocked
-  local reqsmatch = self.recipe.reqsmatch
-  local readytocook = self.recipe.readytocook
-  local correctcooker = self.recipe.correctcooker
+	local recipe = self.fooditem.recipe
+  local foodname = recipe.name
+  local unlocked = recipe.unlocked
+  local reqsmatch = recipe.reqsmatch
+  local readytocook = recipe.readytocook
+  local correctcooker = recipe.correctcooker
 
-  if self.foodname then
-    self.reqsmatch = reqsmatch
+  if foodname then
+    reqsmatch = reqsmatch
 
     if self.fgimage then
       if unlocked and correctcooker then

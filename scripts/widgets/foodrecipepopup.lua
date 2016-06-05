@@ -80,9 +80,10 @@ local FoodRecipePopup = Class(Widget, function(self, owner, recipe)
 		self:_CreateLayout(self._maxwrap, self.recipe.maxmix, false)
 end)
 
-function FoodRecipePopup:Update()
-	for _, ui in ipairs(ingredients) do
-		ui:Update()
+function FoodRecipePopup:Update(cookerIngs)
+	for _, ui in ipairs(self.ingredients) do
+		local alias,type = ui:GetIngredient()
+		ui:Update(cookerIngs[type..'s'][alias] and cookerIngs[type..'s'][alias] or 0)
 	end
 end
 

@@ -37,7 +37,7 @@ local function OnAfterLoad()
 	if player and player.components and player.components.knownfoods then
 		local config = {lock_uncooked=GetModConfigData("lock_uncooked")}
 		player.components.knownfoods:OnAfterLoad(config)
-    player.HUD.controls.foodcrafting:OnAfterLoad(player)
+    player.HUD.controls.foodcrafting:OnAfterLoad(config)
 	end
 end
 
@@ -88,7 +88,7 @@ local function CookerPostInit(inst)
 
 	local function cookerchangefn(inst)
 		local HUD = GetPlayer().HUD
-		if HUD then HUD.controls.foodcrafting:UpdateRecipes() end
+		if HUD then HUD.controls.foodcrafting:SortFoods() end
 	end
 
 -- override methods

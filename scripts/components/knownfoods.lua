@@ -569,11 +569,27 @@ function KnownFoods:IncrementCookCounter(foodname)
   if self._knownfoods[foodname] then
     self._knownfoods[foodname].times_cooked = times_cooked + 1
   end
-  self.owner.HUD.controls.foodcrafting:UpdateRecipes()
+  --self.owner.HUD.controls.foodcrafting:UpdateRecipes()
 end
 
 function KnownFoods:GetKnownFoods()
   return self._knownfoods
+end
+
+-- function used by foocrafting
+function KnownFoods:UpdateRecipe(recipe, ingdata)
+	recipe.reqsmatch = false -- all the min requirements are met
+	recipe.reqsmismatch = false -- all the max requirements are met
+	recipe.readytocook = false -- all ingredients match recipe and cookpot is loaded
+	recipe.specialcooker = recipe.cookername ~= self._basiccooker -- does the recipe require special cooker
+	recipe.unlocked = not self._config.lock_uncooked or recipe.times_cooked and recipe.times_cooked > 0
+
+	if not self:_TestMax(recipe.name, ingdata.names, ingdata.tags) then
+		recipe.reqsmismatch = true
+	end
+	if self:_Test(recipe.name, ingdata.names, ingdata.tags) then
+		recipe.reqsmatch = true
+	end
 end
 
 return KnownFoods

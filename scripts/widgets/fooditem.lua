@@ -35,7 +35,8 @@ function FoodItem:SetSlot(slot)
 	self.slot = slot
 end
 
-function FoodItem:ShowPopup()
+function FoodItem:ShowPopup(cookerIngs)
+	self.recipepopup:Update(cookerIngs)
   self.recipepopup:Show()
 end
 
@@ -50,7 +51,8 @@ function FoodItem:OnGainFocus()
 	end
 end
 
-function FoodItem:Refresh(recipe)
+function FoodItem:Refresh()
+	local recipe = self.recipe
   local foodname = recipe.name
   local unlocked = recipe.unlocked
   local reqsmatch = recipe.reqsmatch

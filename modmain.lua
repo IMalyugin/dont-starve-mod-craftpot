@@ -64,7 +64,7 @@ end
 local function CookerPostInit(inst)
 	if not inst.components.stewer then return end
 
--- store base metods
+-- store base methods
   local onopenfn = inst.components.container.onopenfn
   local onclosefn = inst.components.container.onclosefn
 	local ondonecookingfn = inst.components.stewer.ondonecooking
@@ -87,6 +87,7 @@ local function CookerPostInit(inst)
   end
 
 	local function cookerchangefn(inst)
+		-- TODO: prevalidate if ingredient contents did not change, to reduce load
 		local HUD = GetPlayer().HUD
 		if HUD then HUD.controls.foodcrafting:SortFoods() end
 	end
@@ -98,6 +99,8 @@ local function CookerPostInit(inst)
 
 	inst:ListenForEvent("itemget", cookerchangefn)
 	inst:ListenForEvent("itemlose", cookerchangefn)
+	GetPlayer():ListenForEvent( "itemget", cookerchangefn)
+	-- TODO: track itemget of additional open inventories
 end
 
 local function FollowCameraPostInit(inst)

@@ -160,6 +160,20 @@ function FoodCrafting:SortFoods()
 	if not self._open then return end
 
 	local ingdata,num_ing = self:_GetContainerIngredientValues(self._cooker.components.container)
+
+	local inv_ingdata,inv_num_ing = self:_GetContainerIngredientValues(self.owner.components.inventory)
+	for k,v in pairs(inv_ingdata.names) do
+		print(k..'='..v)
+	end
+	--local cnt=0
+	--for _,c_inst in pairs(self.owner.HUD.controls.containers) do
+	--	print(c_inst.container.prefab)
+	--end
+	--local bp = self.owner.components.inventory:GetEquippedItem(EQUIPSLOTS.BODY)
+	--if bp and bp.components.container then
+	--	bp.components.container:Close()
+	--end
+
 	self.cookerIngs = ingdata
 	self.invIngs = nil
 	self:_RefreshFoodStats(ingdata,num_ing)
@@ -335,11 +349,11 @@ function FoodCrafting:_GetIngredientValues(prefablist)
 	local names = {}
 	local tags = {}
 	for k,v in pairs(prefablist) do
-		local name = self._aliases[v] or v
-		names[name] = names[name] and names[name] + 1 or 1
+		local name = self._aliases[v.name] or v.name
 		if self._ingredients[name] then
+			names[name] = names[name] and names[name] + v.amt or v.amt
 			for kk, vv in pairs(self._ingredients[name].tags) do
-				tags[kk] = tags[kk] and tags[kk] + vv or vv
+				tags[kk] = tags[kk] and tags[kk] + vv*v.amt or vv*v.amt
 			end
 		end
 	end
@@ -349,8 +363,10 @@ end
 
 function FoodCrafting:_GetContainerIngredientValues(container)
   local ings = {}
-  for k,v in pairs(container.slots) do
-    table.insert(ings, v.prefab)
+	local slots = container.slots or container.itemslots or {}
+  for k,v in pairs(slots) do
+		local amt = v.components.stackable and v.components.stackable.stacksize or 1
+    table.insert(ings, {name=v.prefab,amt=amt})
   end
   return self:_GetIngredientValues(ings), #ings
 end

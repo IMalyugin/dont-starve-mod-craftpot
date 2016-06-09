@@ -117,7 +117,6 @@ function FoodCrafting:SetOrientation(horizontal)
 end
 
 function FoodCrafting:FoodFocus(slot_idx)
-	--print(slot_idx..' - '..self.idx)
 	local focusIdx = slot_idx+self.idx
 	if focusIdx <= 0 or focusIdx > #self.selfoods then
 		return false
@@ -159,12 +158,10 @@ end
 function FoodCrafting:SortFoods()
 	if not self._open then return end
 
-	local ingdata,num_ing = self:_GetContainerIngredientValues(self._cooker.components.container)
+	local cooker_ings = self:_GetContainerIngredients(self._cooker.components.container)
+	local cooker_ingdata = self:_GetIngredientValues(cooker_ings)
+	local inv_ings = self:_GetContainerIngredients(self.owner.components.inventory)
 
-	local inv_ingdata,inv_num_ing = self:_GetContainerIngredientValues(self.owner.components.inventory)
-	for k,v in pairs(inv_ingdata.names) do
-		print(k..'='..v)
-	end
 	--local cnt=0
 	--for _,c_inst in pairs(self.owner.HUD.controls.containers) do
 	--	print(c_inst.container.prefab)
@@ -174,18 +171,20 @@ function FoodCrafting:SortFoods()
 	--	bp.components.container:Close()
 	--end
 
-	self.cookerIngs = ingdata
+	self.cookerIngs = cooker_ingdata
 	self.invIngs = nil
-	self:_RefreshFoodStats(ingdata,num_ing)
-	-- do nothing for now
+	self:_UpdateFoodStats(cooker_ingdata,#cooker_ings,inv_ings)
+
 	table.sort(self.allfoods, function(a,b)
     if a.recipe.correctcooker ~= b.recipe.correctcooker then return a.recipe.correctcooker end
     if a.recipe.readytocook ~= b.recipe.readytocook then return a.recipe.readytocook end
     if b.recipe.name == "wetgoop" then return true elseif a.recipe.name == "wetgoop" then return false end
 
-    if a.recipe.reqsmatch ~= b.recipe.reqsmatch then return a.recipe.reqsmatch end
+    --if a.recipe.reqsmatch ~= b.recipe.reqsmatch then return a.recipe.reqsmatch end
+
     if a.recipe.unlocked ~= b.recipe.unlocked then return a.recipe.unlocked end
-    if a.recipe.reqsmismatch ~= b.recipe.reqsmismatch then return a.recipe.reqsmismatch end
+    --if a.recipe.reqsmismatch ~= b.recipe.reqsmismatch then return a.recipe.reqsmismatch end
+		if a.recipe.predict ~= b.recipe.predict then return a.recipe.predict > b.recipe.predict end
     return a.recipe.priority > b.recipe.priority
   end)
 	self:FilterFoods()
@@ -196,11 +195,11 @@ function FoodCrafting:FilterFoods()
 	-- define filterfn
 	for idx, fooditem in ipairs(self.allfoods) do
 		--if not self.filterFn or self.filterFn(fooditem) then
-			if self._cooker.prefab == 'cookpot' or fooditem.recipe.cookername == self._cooker.prefab then
-				if not fooditem.recipe.hide then
-					table.insert(self.selfoods, fooditem)
-				end
+		if self._cooker.prefab == 'cookpot' or fooditem.recipe.cookername == self._cooker.prefab then
+			if not fooditem.recipe.hide then
+				table.insert(self.selfoods, fooditem)
 			end
+		end
 		--end
 	end
 
@@ -234,16 +233,11 @@ function FoodCrafting:UpdateFoodSlots()
 
 	for idx=1, self.num_slots do
 		local foodidx = idx + self.idx
-		--print("looper")
 		if foodidx > 0 and foodidx <= #self.selfoods then
-		--	print("setfood="..idx..":"..foodidx)
 			self.foodslots[idx]:SetFood(self.selfoods[foodidx])
-		--	print('woot')
 			self.selfoods[foodidx]:SetSlot(self.foodslots[idx])
-		--	print('what')
 		end
 	end
-	--print("afterlooper")
 
 	if self.focusItem then
 		self.focusItem:HidePopup()
@@ -313,7 +307,7 @@ function FoodCrafting:IsFocused()
 	return self._focused
 end
 
-function FoodCrafting:_RefreshFoodStats(ingdata, num_ing)
+function FoodCrafting:_UpdateFoodStats(ingdata, num_ing, inv_ings)
 	local cook_priority = -9999
 	for idx, fooditem in ipairs(self.allfoods) do
 		local recipe = fooditem.recipe
@@ -330,9 +324,10 @@ function FoodCrafting:_RefreshFoodStats(ingdata, num_ing)
 		recipe.hide = num_ing > 0 and (not recipe.correctcooker or recipe.reqsmismatch)
 	end
 
-	for idx, fooditem in ipairs(self.allfoods) do
-		local recipe = fooditem.recipe
-		if num_ing == 4 then -- show only dishes that have chance of cooking
+	if num_ing == 4 then
+		-- show only dishes that have a chance of cooking
+		for idx, fooditem in ipairs(self.allfoods) do
+			local recipe = fooditem.recipe
 			if recipe.readytocook then
 				 if recipe.priority < cook_priority then
 					 recipe.readytocook = false
@@ -342,13 +337,55 @@ function FoodCrafting:_RefreshFoodStats(ingdata, num_ing)
 				recipe.hide = true
 			end
 		end
+	else
+		-- predict user input recipe
+		for idx, fooditem in ipairs(self.allfoods) do
+			local recipe = fooditem.recipe
+			recipe.predict = 0
+			for _,minset in ipairs(recipe.minlist) do
+				local minnames = minset.names
+				local mintags = deepcopy(minset.tags)
+				local predict = 0
+				--for minname, amt in pairs(minnames) do
+				for name, name_amt in pairs(ingdata.names) do
+					local name_amt_used = 0
+					if minnames[name] then
+						local name_amt_used = math.min(minnames[name], name_amt)
+						predict = predict + 2*name_amt_used
+					end
+
+					local name_amt_unused = name_amt - name_amt_used
+					if name_amt_unused > 0 then
+						for tag, tag_amt in pairs(self._ingredients[name].tags) do
+							if mintags[tag] then
+								local tag_amt_used = math.min(mintags[tag], tag_amt*name_amt_unused)
+								mintags[tag] = mintags[tag] - tag_amt_used
+								predict = predict + tag_amt_used
+							end
+						end
+					end
+				end-- loop ingdata.names
+				recipe.predict = math.max(recipe.predict, predict)
+			end
+
+		end
+
+		-- calculate what can be cooked
+		for idx, fooditem in ipairs(self.allfoods) do
+			local recipe = fooditem.recipe
+			for k,v in ipairs(ingdata) do
+
+			end
+		end
 	end
+
 end
 
-function FoodCrafting:_GetIngredientValues(prefablist)
+function FoodCrafting:_GetIngredientValues(ings)
 	local names = {}
 	local tags = {}
-	for k,v in pairs(prefablist) do
+
+	for k,v in pairs(ings) do
 		local name = self._aliases[v.name] or v.name
 		if self._ingredients[name] then
 			names[name] = names[name] and names[name] + v.amt or v.amt
@@ -361,14 +398,18 @@ function FoodCrafting:_GetIngredientValues(prefablist)
 	return {tags = tags, names = names}
 end
 
-function FoodCrafting:_GetContainerIngredientValues(container)
+function FoodCrafting:_GetContainerIngredients(...)
   local ings = {}
-	local slots = container.slots or container.itemslots or {}
-  for k,v in pairs(slots) do
-		local amt = v.components.stackable and v.components.stackable.stacksize or 1
-    table.insert(ings, {name=v.prefab,amt=amt})
-  end
-  return self:_GetIngredientValues(ings), #ings
+
+	for _,container in ipairs(arg) do
+		local slots = container.slots or container.itemslots or {}
+
+  	for k,v in pairs(slots) do
+			local amt = v.components.stackable and v.components.stackable.stacksize or 1
+    	table.insert(ings, {name=v.prefab,amt=amt})
+  	end
+	end
+  return ings
 end
 
 return FoodCrafting

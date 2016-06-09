@@ -504,9 +504,28 @@ function KnownFoods:MinimizeRecipe(foodname,recipe)
 	else
 		return false
 	end
-  --print("~~ minmix between = "..#recipe.minmix)
-  --recipe.minlist = self:_Decomposition(recipe.minmix)
-  --print("~~ minlist after = "..#recipe.minlist)
+
+	--[[recipe.minlist_predict = {}
+	for _, minset in ipairs(recipe.minlist) do
+		local minset_predict = {names=deepcopy(minset.names), tags=deepcopy(minset.tags)}
+		for name, name_amt in pairs(minset.names) do
+
+		end
+		table.insert(recipe.minlist_predict, minset_predict)
+	end]]
+
+	for _, minset in ipairs(recipe.minlist) do
+		for name, name_amt in pairs(minset.names) do
+			for tag, tag_amt in pairs(self._ingredients[name].tags) do
+				if minset.tags[tag] then
+					minset.tags[tag] = minset.tags[tag] - tag_amt * name_amt
+					if minset.tags[tag] <= 0 then
+						minset.tags[tag] = nil
+					end
+				end
+			end
+		end
+	end
 
   return true
 end

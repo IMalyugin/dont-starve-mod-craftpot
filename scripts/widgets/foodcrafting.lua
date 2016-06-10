@@ -90,6 +90,7 @@ function FoodCrafting:SetOrientation(horizontal)
 
 		if not self.horizontal then
 	    self:SetPosition(305,0,0)
+			self:SetPosition(280,0,0)
 	  end
 
     self.bg:SetNumTiles(self.num_slots)

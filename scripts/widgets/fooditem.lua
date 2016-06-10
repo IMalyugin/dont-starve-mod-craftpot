@@ -24,9 +24,9 @@ local FoodItem = Class(Widget, function(self, owner, foodcrafting, recipe)
   self.tile = self:AddChild(Image(self.atlas, recipe.name..".tex"))
 
 	self.recipepopup = self:AddChild(FoodRecipePopup(self.owner, self.recipe))
-	self.recipepopup:SetPosition(0,-20,0)
+	self.recipepopup:SetPosition(-24,-8,0)
 	self.recipepopup:Hide()
-	local s = 1.25
+	local s = 1.60
 	self.recipepopup:SetScale(s,s,s)
 
 end)

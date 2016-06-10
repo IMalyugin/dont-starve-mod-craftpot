@@ -38,7 +38,7 @@ local FoodRecipePopup = Class(Widget, function(self, owner, recipe)
 
 
     self.contents = self:AddChild(Widget(""))
-    self.contents:SetPosition(-75,0,0)
+    self.contents:SetPosition(229,130,0)
 
     if JapaneseOnPS4() then
       self.name = self.contents:AddChild(Text(UIFONT, 42 * 0.8))
@@ -46,7 +46,7 @@ local FoodRecipePopup = Class(Widget, function(self, owner, recipe)
       self.name = self.contents:AddChild(Text(UIFONT, 42))
 	  end
 
-    self.name:SetPosition(320, 142, 0)
+    self.name:SetPosition(3, 0, 0)
     if JapaneseOnPS4() then
       self.name:SetRegionSize(64*3+20,90)
       self.name:EnableWordWrap(true)
@@ -61,20 +61,44 @@ local FoodRecipePopup = Class(Widget, function(self, owner, recipe)
       self.excludes_title = self.contents:AddChild(Text(UIFONT, 32))
 	  end
 
+		self.hunger = self.contents:AddChild(Text(BODYTEXTFONT, 28))
+		self.hunger:SetPosition(5,82,0)
+		self.hunger:SetString(recipe.hunger and recipe.hunger~=0 and string.format("%g",(math.floor(recipe.hunger*10+0.5)/10)) or '-')
+		if recipe.hunger and recipe.hunger < 0 then
+			self.hunger:SetColour(1,0,0,1)
+			self.hunger:SetPosition(2,82,0)
+		end
+
+		self.sanity = self.contents:AddChild(Text(BODYTEXTFONT, 28))
+		self.sanity:SetPosition(-73,54,0)
+		self.sanity:SetString(recipe.sanity and recipe.sanity~=0 and string.format("%g",(math.floor(recipe.sanity*10+0.5)/10)) or '-')
+		if recipe.sanity and recipe.sanity < 0 then
+			self.sanity:SetColour(1,0,0,1)
+			self.sanity:SetPosition(-76,53,0)
+		end
+
+		self.health = self.contents:AddChild(Text(BODYTEXTFONT, 28))
+		self.health:SetPosition(84,54,0)
+		self.health:SetString(recipe.health and recipe.health~=0 and string.format("%g",(math.floor(recipe.health*10+0.5)/10)) or '-')
+		if recipe.health and recipe.health < 0 then
+			self.health:SetPosition(81,53,0)
+			self.health:SetColour(1,0,0,1)
+		end
+
+
     self.excludes_title:SetString('Limit')
 
-    self.excludes_title:SetPosition(320, -13, 0)
+    self.excludes_title:SetPosition(0, -164, 0)
     if JapaneseOnPS4() then
       self.excludes_title:SetRegionSize(64*3+20,90)
       --self.excludes_title:EnableWordWrap(true)
     end
 
-		local center = 317
 		self._minwrap = self.contents:AddChild(Widget(""))
-		self._minwrap:SetPosition(center,115,0)
+		self._minwrap:SetPosition(0,-27,0)
 
 		self._maxwrap = self.contents:AddChild(Widget(""))
-		self._maxwrap:SetPosition(center,-35,0)
+		self._maxwrap:SetPosition(0,-186,0)
 
 		self:_CreateLayout(self._minwrap, self.recipe.minmix, true)
 		self:_CreateLayout(self._maxwrap, self.recipe.maxmix, false)

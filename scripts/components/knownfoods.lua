@@ -296,9 +296,9 @@ function KnownFoods:MinimizeRecipe(foodname,recipe)
   end
 
   recipe.name = foodname
-  recipe.test = self._cookerRecipes[foodname].test
-  recipe.cookername = self._cookerRecipes[foodname].cookername
-  recipe.priority = self._cookerRecipes[foodname].priority
+	for k,v in pairs(self._cookerRecipes[foodname]) do
+		recipe[k] = v
+	end
 
   -- validate used names and tags
   local names = {}

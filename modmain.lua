@@ -1,12 +1,5 @@
--- Thanks to simplex for this clever memoized DST check!
-local is_dst
 local function IsDST()
-    if is_dst == nil then
-		-- test changing this to: (still need to test single-player)
-        is_dst = GLOBAL.TheSim:GetGameID() == "DST"
-        -- is_dst = GLOBAL.kleifileexists("scripts/networking.lua") and true or false
-    end
-    return is_dst
+	return GLOBAL.TheSim:GetGameID() == "DST"
 end
 
 local function GetPlayer()
@@ -17,21 +10,17 @@ local function GetPlayer()
 	end
 end
 
-
 local require = GLOBAL.require
 local Vector3 = GLOBAL.Vector3
 local GetPlayer = GLOBAL.GetPlayer
 
 local MouseFoodCrafting = require "widgets/mousefoodcrafting"
+local Constants = require "constants"
 
 Assets = {
 	Asset("ATLAS", "images/food_tags.xml"),
 	Asset("ATLAS", "images/recipe_hud.xml"),
 }
---local require = GLOBAL.require
---local cooking = require "cooking"
---local recipes = cooking.recipes["cookpot"] or {}
---local ingredients = cooking.ingredients or {}
 
 local _SimLoaded = false
 local _GameLoaded = false
@@ -44,9 +33,11 @@ end
 
 local function OnAfterLoad()
 	local player = GetPlayer()
+
 	if player and player.components and player.components.knownfoods then
 		local config = {lock_uncooked=GetModConfigData("lock_uncooked")}
 		player.components.knownfoods:OnAfterLoad(config)
+    player.HUD.controls.foodcrafting:OnAfterLoad(config)
 	end
 end
 
@@ -62,7 +53,6 @@ local function OnGameLoad()
 	if _SimLoaded == true then
 		OnAfterLoad()
 	end
-
 end
 
 
@@ -74,8 +64,7 @@ end
 local function CookerPostInit(inst)
 	if not inst.components.stewer then return end
 
-
--- store base metods
+-- store base methods
   local onopenfn = inst.components.container.onopenfn
   local onclosefn = inst.components.container.onclosefn
 	local ondonecookingfn = inst.components.stewer.ondonecooking
@@ -98,8 +87,9 @@ local function CookerPostInit(inst)
   end
 
 	local function cookerchangefn(inst)
+		-- TODO: prevalidate if ingredient contents did not change, to reduce load
 		local HUD = GetPlayer().HUD
-		if HUD then HUD.controls.foodcrafting:UpdateRecipes() end
+		if HUD then HUD.controls.foodcrafting:SortFoods() end
 	end
 
 -- override methods
@@ -109,9 +99,19 @@ local function CookerPostInit(inst)
 
 	inst:ListenForEvent("itemget", cookerchangefn)
 	inst:ListenForEvent("itemlose", cookerchangefn)
+	GetPlayer():ListenForEvent( "itemget", cookerchangefn)
+	-- TODO: track itemget of additional open inventories
 end
 
+local function FollowCameraPostInit(inst)
+	local old_can_control = inst.CanControl
+	inst.CanControl = function(inst)
+		return old_can_control(inst) and not GetPlayer().HUD.controls.foodcrafting:IsFocused()
+	end
+end
 
+-- follow camera modification is required to cancel the scrolling
+AddClassPostConstruct("cameras/followcamera", FollowCameraPostInit)
 AddPlayerPostInit(OnLoad)
 
 -- these two loads race each other, last one gets to launch OnAfterLoad
@@ -119,6 +119,5 @@ AddSimPostInit(OnSimLoad) -- fires before game init
 AddGamePostInit(OnGameLoad) -- fires last, unless it is first game launch, then it fires first
 AddClassPostConstruct("widgets/controls", ControlsPostInit)
 
---AddComponentPostInit("stewer",StewerPostInit)
 -- sadly we have to try every prefab ingame, since we just can't bind events onto postinit of stewer.host prefab
 AddPrefabPostInitAny(CookerPostInit)

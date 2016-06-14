@@ -10,6 +10,7 @@ local UIAnim = require "widgets/uianim"
 local Text = require "widgets/text"
 
 local FoodIngredientUI = require "widgets/foodingredientui"
+local mainfunctions = require "mainfunctions"
 
 require "widgets/widgetutil"
 
@@ -73,26 +74,13 @@ function FoodRecipePopup:Refresh()
   end
 
   local localized_foodname = STRINGS.NAMES[string.upper(self.recipe.name)] or recipe.name
-  recipe.minnames = {froglegs=5,dragonfruit=1,twigs=2}
-  recipe.mintags = {froglegs=5,dragonfruit=1,twigs=2}
-
   self.name:SetString(localized_foodname)
   --self.desc:SetString("test desc")
 
   local num = 0
   local center = 317
-
   local w = 64
-  local iconh = 64
-  local divw = 10
-  local divh = 20
-  local bracketw = 15
-  local altw = 30
-
-  local areaW = 220
-  local areaH = 100
-
-  local rows = 1
+  local div = 10
 
   self._minfoodwrap = self.contents:AddChild(Widget(""))
   self._minfoodwrap:SetPosition(center,115,0)
@@ -153,16 +141,30 @@ function FoodRecipePopup:Refresh()
         local atlas
         if is_name then
           atlas = self.atlas
-          if SaveGameIndex:IsModeShipwrecked() and SW_ICONS[item_img] ~= nil then
-            item_img = SW_ICONS[item_img]
-          end
-
+					if PREFABDEFINITIONS[item_img] then
+	          for idx,asset in ipairs(PREFABDEFINITIONS[item_img].assets) do
+	            if asset.type == "INV_IMAGE" then
+	              item_img = asset.file
+	            elseif asset.type == "ATLAS" then
+	              atlas = asset.file
+	            end
+	          end
+					end
         else
           if TEX_TAGS[item_img] then
             atlas = self.tag_atlas
             localized_name = TEX_TAGS[item_img]
           else
             atlas = self.atlas
+            if PREFABDEFINITIONS[item_img] then
+              for idx,asset in ipairs(PREFABDEFINITIONS[item_img].assets) do
+                if asset.type == "INV_IMAGE" then
+                  item_img = asset.file
+                elseif asset.type == "ATLAS" then
+                  atlas = asset.file
+                end
+              end
+            end
           end
         end
 

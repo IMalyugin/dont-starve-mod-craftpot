@@ -62,29 +62,8 @@ local FoodRecipePopup = Class(Widget, function(self, owner, recipe)
 	  end
 
 		self.hunger = self.contents:AddChild(Text(BODYTEXTFONT, 28))
-		self.hunger:SetPosition(5,82,0)
-		self.hunger:SetString(recipe.hunger and recipe.hunger~=0 and string.format("%g",(math.floor(recipe.hunger*10+0.5)/10)) or '-')
-		if recipe.hunger and recipe.hunger < 0 then
-			self.hunger:SetColour(1,0,0,1)
-			self.hunger:SetPosition(2,82,0)
-		end
-
 		self.sanity = self.contents:AddChild(Text(BODYTEXTFONT, 28))
-		self.sanity:SetPosition(-73,54,0)
-		self.sanity:SetString(recipe.sanity and recipe.sanity~=0 and string.format("%g",(math.floor(recipe.sanity*10+0.5)/10)) or '-')
-		if recipe.sanity and recipe.sanity < 0 then
-			self.sanity:SetColour(1,0,0,1)
-			self.sanity:SetPosition(-76,53,0)
-		end
-
 		self.health = self.contents:AddChild(Text(BODYTEXTFONT, 28))
-		self.health:SetPosition(84,54,0)
-		self.health:SetString(recipe.health and recipe.health~=0 and string.format("%g",(math.floor(recipe.health*10+0.5)/10)) or '-')
-		if recipe.health and recipe.health < 0 then
-			self.health:SetPosition(81,53,0)
-			self.health:SetColour(1,0,0,1)
-		end
-
 
     self.excludes_title:SetString('Limit')
 
@@ -108,6 +87,29 @@ function FoodRecipePopup:Update(cookerIngs)
 	for _, ui in ipairs(self.ingredients) do
 		local alias,type = ui:GetIngredient()
 		ui:Update(cookerIngs[type..'s'][alias] and cookerIngs[type..'s'][alias] or 0)
+	end
+
+	local recipe = self.recipe
+
+	self.hunger:SetPosition(5,82,0)
+	self.hunger:SetString((not recipe.unlocked) and '?' or type(recipe.hunger) == 'number' and recipe.hunger~=0 and string.format("%g",(math.floor(recipe.hunger*10+0.5)/10)) or '-')
+	if recipe.unlocked and type(recipe.hunger) == 'number' and recipe.hunger < 0 then
+		self.hunger:SetColour(1,0,0,1)
+		self.hunger:SetPosition(2,82,0)
+	end
+
+	self.sanity:SetPosition(-73,54,0)
+	self.sanity:SetString(not recipe.unlocked and '?' or type(recipe.sanity) == 'number' and recipe.sanity~=0 and string.format("%g",(math.floor(recipe.sanity*10+0.5)/10)) or '-')
+	if recipe.unlocked and type(recipe.sanity) == 'number' and recipe.sanity < 0 then
+		self.sanity:SetColour(1,0,0,1)
+		self.sanity:SetPosition(-76,53,0)
+	end
+
+	self.health:SetPosition(84,54,0)
+	self.health:SetString(not recipe.unlocked and '?' or type(recipe.health) == 'number' and recipe.health~=0 and string.format("%g",(math.floor(recipe.health*10+0.5)/10)) or '-')
+	if recipe.unlocked and type(recipe.health) == 'number' and recipe.health < 0 then
+		self.health:SetPosition(81,53,0)
+		self.health:SetColour(1,0,0,1)
 	end
 end
 

@@ -33,6 +33,7 @@ local FoodCrafting = Class(Widget, function(self, num_slots, owner)
   --self._basiccooker = 'cookpot' -- name of basic cooker
 
 	self._ingredients = Cooking.ingredients
+	self._tagweights = self:_GetTagWeights()
   self._aliases = { -- cooking ingredient alias mismatch
   	cookedsmallmeat = "smallmeat_cooked",
   	cookedmonstermeat = "monstermeat_cooked",
@@ -183,10 +184,12 @@ function FoodCrafting:SortFoods()
 
     --if a.recipe.reqsmatch ~= b.recipe.reqsmatch then return a.recipe.reqsmatch end
 
-    if a.recipe.unlocked ~= b.recipe.unlocked then return a.recipe.unlocked end
+    --if a.recipe.unlocked ~= b.recipe.unlocked then return a.recipe.unlocked end
     --if a.recipe.reqsmismatch ~= b.recipe.reqsmismatch then return a.recipe.reqsmismatch end
 		if a.recipe.predict ~= b.recipe.predict then return a.recipe.predict > b.recipe.predict end
-    return a.recipe.priority > b.recipe.priority
+		if a.recipe.unfulfilled ~= b.recipe.unfulfilled then return a.recipe.unfulfilled < b.recipe.unfulfilled end
+    if a.recipe.priority ~= b.recipe.priority then return a.recipe.priority > b.recipe.priority end
+		return a.recipe.name > b.recipe.name
   end)
 	self:FilterFoods()
 end
@@ -343,6 +346,7 @@ function FoodCrafting:_UpdateFoodStats(ingdata, num_ing, inv_ings)
 		for idx, fooditem in ipairs(self.allfoods) do
 			local recipe = fooditem.recipe
 			recipe.predict = 0
+			recipe.unfulfilled = 0
 			for _,minset in ipairs(recipe.minlist) do
 				local minnames = minset.names
 				local mintags = deepcopy(minset.tags)
@@ -352,7 +356,7 @@ function FoodCrafting:_UpdateFoodStats(ingdata, num_ing, inv_ings)
 					local name_amt_used = 0
 					if minnames[name] then
 						local name_amt_used = math.min(minnames[name], name_amt)
-						predict = predict + 2*name_amt_used
+						predict = predict + 3*name_amt_used
 					end
 
 					local name_amt_unused = name_amt - name_amt_used
@@ -361,11 +365,15 @@ function FoodCrafting:_UpdateFoodStats(ingdata, num_ing, inv_ings)
 							if mintags[tag] then
 								local tag_amt_used = math.min(mintags[tag], tag_amt*name_amt_unused)
 								mintags[tag] = mintags[tag] - tag_amt_used
-								predict = predict + tag_amt_used
+								predict = predict + tag_amt_used * self._tagweights[tag]
 							end
 						end
 					end
 				end-- loop ingdata.names
+
+				for tag, amt in pairs(mintags) do
+					recipe.unfulfilled = recipe.unfulfilled + amt * self._tagweights[tag]
+				end
 				recipe.predict = math.max(recipe.predict, predict)
 			end
 
@@ -397,6 +405,20 @@ function FoodCrafting:_GetIngredientValues(ings)
 	end
 
 	return {tags = tags, names = names}
+end
+
+function FoodCrafting:_GetTagWeights()
+	local tagweights = {}
+	local tagdata = {}
+	for name,ing in pairs(self._ingredients) do
+		for tag,amt in pairs(ing.tags) do
+			tagdata[tag] = tagdata[tag] and {max=math.max(tagdata[tag].max,amt), cnt=tagdata[tag].cnt+1} or {max=amt,cnt=1}
+		end
+	end
+	for tag,data in pairs(tagdata) do
+		tagweights[tag] = math.max(1, 3-math.pow(data.cnt,1/4)) / data.max
+	end
+	return tagweights
 end
 
 function FoodCrafting:_GetContainerIngredients(...)

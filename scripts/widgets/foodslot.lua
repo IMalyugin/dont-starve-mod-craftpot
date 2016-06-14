@@ -43,13 +43,6 @@ function FoodSlot:OnGainFocus()
   FoodSlot._base.OnGainFocus(self)
 	if self.slot_idx then
   	self.foodcrafting:FoodFocus(self.slot_idx)
-		print("foodname:"..self.fooditem.recipe.name)
-		print("correctcooker:"..(self.fooditem.recipe.correctcooker and '1' or '0'))
-		print("readytocook:"..(self.fooditem.recipe.readytocook and '1' or '0'))
-		print("reqsmatch:"..(self.fooditem.recipe.reqsmatch and '1' or '0'))
-		print("reqsmismatch:"..(self.fooditem.recipe.reqsmismatch and '1' or '0'))
-		print("unlocked:"..(self.fooditem.recipe.unlocked and '1' or '0'))
-		print("priority:"..self.fooditem.recipe.priority)
 	end
 end
 

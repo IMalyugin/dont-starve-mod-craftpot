@@ -140,7 +140,7 @@ end
 function FoodCrafting:Open(cooker_inst)
 	self._cooker = cooker_inst
 	self._cookername = cooker_inst.prefab
-
+	print("open "..self._cookername)
   self._open = true
 	self:Enable()
   self:Show()
@@ -175,8 +175,9 @@ function FoodCrafting:SortFoods()
 
 	self.cookerIngs = cooker_ingdata
 	self.invIngs = nil
+	print("before update")
 	self:_UpdateFoodStats(cooker_ingdata,#cooker_ings,inv_ings)
-
+	print("updatefoodstats done")
 	table.sort(self.allfoods, function(a,b)
     if a.recipe.correctcooker ~= b.recipe.correctcooker then return a.recipe.correctcooker end
     if a.recipe.readytocook ~= b.recipe.readytocook then return a.recipe.readytocook end
@@ -191,6 +192,7 @@ function FoodCrafting:SortFoods()
     if a.recipe.priority ~= b.recipe.priority then return a.recipe.priority > b.recipe.priority end
 		return a.recipe.name > b.recipe.name
   end)
+	print("sort done")
 	self:FilterFoods()
 end
 
@@ -199,13 +201,15 @@ function FoodCrafting:FilterFoods()
 	-- define filterfn
 	for idx, fooditem in ipairs(self.allfoods) do
 		--if not self.filterFn or self.filterFn(fooditem) then
-		if self._cooker.prefab == 'cookpot' or fooditem.recipe.cookername == self._cooker.prefab then
+		if fooditem.recipe.correctcooker then
 			if not fooditem.recipe.hide then
 				table.insert(self.selfoods, fooditem)
 			end
 		end
 		--end
 	end
+
+	print("Filtered ".. #self.selfoods.." items")
 
 	self:UpdateFoodSlots()
 end
@@ -253,6 +257,7 @@ function FoodCrafting:UpdateFoodSlots()
 			self.focusItem = nil
 		end
 	end
+	print("done updatefoodslots")
 end
 
 function FoodCrafting:OnControl(control, down)

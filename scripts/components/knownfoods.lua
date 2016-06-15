@@ -169,18 +169,17 @@ function KnownFoods:OnAfterLoad(config)
     end
   end
 
-  -- then add all the simple recipes
+  --[[[ then add all the simple recipes
   local simplePreparedFoods = require "simplepreparedfoods"
   for foodname, recipe in pairs(simplePreparedFoods) do
     if not self._knownfoods[foodname] and self:MinimizeRecipe(foodname, recipe) then
       self._knownfoods[foodname] = recipe
     end
-  end
+  end]]
 
   -- finally extract missing recipes from the raw cookbook
   local unknownRecipes = self:_GetUnknownRecipes()
   for foodname, recipe in pairs(unknownRecipes) do
-    --print("Smart search of "..foodname)
     local rawRecipe = self:_SmartSearch(recipe.test)
     if rawRecipe and self:MinimizeRecipe(foodname, rawRecipe) then
       self._knownfoods[foodname] = rawRecipe
@@ -497,22 +496,8 @@ function KnownFoods:MinimizeRecipe(foodname,recipe)
     mintags[mintag] = buffer
   end
 
-  --print("~~ minlist prior = "..#recipe.minlist)
-	if recipe.cookername == 'cookpot' then
-  	recipe.minmix = self:_Composition(recipe.minlist)
-		recipe.maxmix = self:_Composition({{names=recipe.maxnames, tags=recipe.maxtags}})
-	else
-		return false
-	end
-
-	--[[recipe.minlist_predict = {}
-	for _, minset in ipairs(recipe.minlist) do
-		local minset_predict = {names=deepcopy(minset.names), tags=deepcopy(minset.tags)}
-		for name, name_amt in pairs(minset.names) do
-
-		end
-		table.insert(recipe.minlist_predict, minset_predict)
-	end]]
+	recipe.minmix = self:_Composition(recipe.minlist)
+	recipe.maxmix = self:_Composition({{names=recipe.maxnames, tags=recipe.maxtags}})
 
 	for _, minset in ipairs(recipe.minlist) do
 		for name, name_amt in pairs(minset.names) do
@@ -584,8 +569,8 @@ function KnownFoods:_GetUnknownRecipes()
 end
 
 function KnownFoods:IncrementCookCounter(foodname)
-  local times_cooked = self._knownfoods[foodname].times_cooked or 0
   if self._knownfoods[foodname] then
+  	local times_cooked = self._knownfoods[foodname].times_cooked or 0
     self._knownfoods[foodname].times_cooked = times_cooked + 1
   end
   --self.owner.HUD.controls.foodcrafting:UpdateRecipes()

@@ -30,15 +30,17 @@ local FoodCrafting = Class(Widget, function(self, num_slots, owner)
 	self.invIngs = nil -- ingredient values of all the items stored in player inventory
 	self.cookerIngs = nil -- ingredient values of items put into the cooker
 	self._focused = false -- widget focus status, required for the camera to stop zooming
-  --self._basiccooker = 'cookpot' -- name of basic cooker
 
-	self._ingredients = Cooking.ingredients
-	self._tagweights = self:_GetTagWeights()
   self._aliases = { -- cooking ingredient alias mismatch
   	cookedsmallmeat = "smallmeat_cooked",
   	cookedmonstermeat = "monstermeat_cooked",
   	cookedmeat = "meat_cooked"
   }
+  self._ingredients = Cooking.ingredients
+  self._tagweights = self:_GetTagWeights()
+  --for ingredient, prefab in pairs(self._aliases) do
+  --  self._ingredients[ingredient] = self._ingredients[prefab]
+  --end
 
 	self.idx = -1
 
@@ -140,7 +142,6 @@ end
 function FoodCrafting:Open(cooker_inst)
 	self._cooker = cooker_inst
 	self._cookername = cooker_inst.prefab
-	print("open "..self._cookername)
   self._open = true
 	self:Enable()
   self:Show()
@@ -175,9 +176,9 @@ function FoodCrafting:SortFoods()
 
 	self.cookerIngs = cooker_ingdata
 	self.invIngs = nil
-	print("before update")
+
 	self:_UpdateFoodStats(cooker_ingdata,#cooker_ings,inv_ings)
-	print("updatefoodstats done")
+
 	table.sort(self.allfoods, function(a,b)
     if a.recipe.correctcooker ~= b.recipe.correctcooker then return a.recipe.correctcooker end
     if a.recipe.readytocook ~= b.recipe.readytocook then return a.recipe.readytocook end
@@ -192,7 +193,7 @@ function FoodCrafting:SortFoods()
     if a.recipe.priority ~= b.recipe.priority then return a.recipe.priority > b.recipe.priority end
 		return a.recipe.name > b.recipe.name
   end)
-	print("sort done")
+
 	self:FilterFoods()
 end
 
@@ -208,8 +209,6 @@ function FoodCrafting:FilterFoods()
 		end
 		--end
 	end
-
-	print("Filtered ".. #self.selfoods.." items")
 
 	self:UpdateFoodSlots()
 end
@@ -257,7 +256,6 @@ function FoodCrafting:UpdateFoodSlots()
 			self.focusItem = nil
 		end
 	end
-	print("done updatefoodslots")
 end
 
 function FoodCrafting:OnControl(control, down)

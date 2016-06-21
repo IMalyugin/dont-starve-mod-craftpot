@@ -151,6 +151,9 @@ function KnownFoods:OnAfterLoad(config)
   self._Cooking = require "cooking"
 
   self._ingredients = self._Cooking.ingredients
+  --for ingredient, prefab in pairs(self._aliases) do
+    --self._ingredients[ingredient] = self._ingredients[prefab]
+  --end
   self:_FillIngredients()
 
   for cookername,recipes in pairs(self._Cooking.recipes) do
@@ -202,13 +205,23 @@ function KnownFoods:_SmartSearch(test)
   local access_list = {} -- list of {type='names'/'tags', field={field}}
 
   setmetatable(names_proxy, {__index=function(t,field)
-    table.insert(access_list, {type='names',field=field})
-    return names[field]
+    if self._ingredients[field] then
+      table.insert(access_list, {type='names',field=field})
+      return names[field]
+    else
+      print("CraftPot ~ detected invalid ingredient ["..field.."] in one of the recipes.")
+      return nil
+    end
   end})
 
   setmetatable(tags_proxy, {__index=function(t,field)
-    table.insert(access_list, {type='tags',field=field})
-    return tags[field]
+    if self._alltags[field] then
+      table.insert(access_list, {type='tags',field=field})
+      return tags[field]
+    else
+      print("CraftPot ~ detected invalid tag ["..field.."] in one of the recipes.")
+      return nil
+    end
   end})
 
   local result

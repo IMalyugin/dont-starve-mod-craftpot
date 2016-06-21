@@ -15,6 +15,12 @@ require "widgets/widgetutil"
 local DELTA_TAG = 0.5
 local TEX_TAGS = {meat="Meats",monster="Monster Foods",veggie="Vegetables",fruit="Fruits",egg="Eggs",sweetener="Sweets",inedible="Inedibles",dairy="Dairies",fat="Fat",frozen="Ice",magic="Magic",decoration="Decoration",seeds="Seeds"}
 
+local ALIASES = {
+  smallmeat_cooked = "cookedsmallmeat",
+  monstermeat_cooked = "cookedmonstermeat",
+  meat_cooked = "cookedmeat"
+}
+
 local FoodIngredientUI = Class(Widget, function(self, element, is_min, owner) -- atlas, image, quantity, name, is_name,
   Widget._ctor(self, "FoodIngredientUI")
 
@@ -29,6 +35,7 @@ local FoodIngredientUI = Class(Widget, function(self, element, is_min, owner) --
 	end
 	self.quantity = element.amt
 
+  self.prefab = ALIASES[self.alias] or self.alias
 	self.is_min = is_min
 
 	-- initialize localized_name, atlas and item_tex
@@ -74,13 +81,13 @@ function FoodIngredientUI:GetIngredient()
 end
 
 function FoodIngredientUI:DefineAssetData()
-	self.item_tex = self.alias..'.tex'
+	self.item_tex = self.prefab..'.tex'
 	self.atlas = resolvefilepath("images/inventoryimages.xml")
-	self.localized_name = STRINGS.NAMES[string.upper(self.alias)] or self.alias
+	self.localized_name = STRINGS.NAMES[string.upper(self.prefab)] or self.prefab
 
 	if self.is_name then
-		if PREFABDEFINITIONS[self.alias] then
-			for idx,asset in ipairs(PREFABDEFINITIONS[self.alias].assets) do
+		if PREFABDEFINITIONS[self.prefab] then
+			for idx,asset in ipairs(PREFABDEFINITIONS[self.prefab].assets) do
 				if asset.type == "INV_IMAGE" then
 					self.item_tex = asset.file..'.tex'
 				elseif asset.type == "ATLAS" then
@@ -89,12 +96,12 @@ function FoodIngredientUI:DefineAssetData()
 			end
 		end
 	else
-		if TEX_TAGS[self.alias] then
+		if TEX_TAGS[self.prefab] then
 			self.atlas = resolvefilepath("images/food_tags.xml")
-			self.localized_name = TEX_TAGS[self.alias]
+			self.localized_name = TEX_TAGS[self.prefab]
 		else
-			if PREFABDEFINITIONS[self.alias] then
-				for idx,asset in ipairs(PREFABDEFINITIONS[self.alias].assets) do
+			if PREFABDEFINITIONS[self.prefab] then
+				for idx,asset in ipairs(PREFABDEFINITIONS[self.prefab].assets) do
 					if asset.type == "INV_IMAGE" then
 						self.item_tex = asset.file..'.tex'
 					elseif asset.type == "ATLAS" then

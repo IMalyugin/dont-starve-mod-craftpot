@@ -375,7 +375,9 @@ function FoodCrafting:_UpdateFoodStats(ingdata, num_ing, inv_ings)
 				end-- loop ingdata.names
 
 				for tag, amt in pairs(mintags) do
-					recipe.unfulfilled = recipe.unfulfilled + amt * self._tagweights[tag]
+					if amt and self._tagweights[tag] then
+						recipe.unfulfilled = recipe.unfulfilled + amt * self._tagweights[tag]
+					end
 				end
 				recipe.predict = math.max(recipe.predict, predict)
 			end

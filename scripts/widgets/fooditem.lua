@@ -13,6 +13,8 @@ local Text = require "widgets/text"
 --local FoodTile = require "widgets/foodtile"
 local FoodRecipePopup = require "widgets/foodrecipepopup"
 
+local mainfunctions = require "mainfunctions"
+
 local FoodItem = Class(Widget, function(self, owner, foodcrafting, recipe)
   Widget._ctor(self, "FoodItem")
   self.owner = owner
@@ -20,8 +22,9 @@ local FoodItem = Class(Widget, function(self, owner, foodcrafting, recipe)
 	self.recipe = recipe
 	self.slot = nil
 
-	self.atlas = resolvefilepath("images/inventoryimages.xml")
-  self.tile = self:AddChild(Image(self.atlas, recipe.name..".tex"))
+  self.prefab = self.recipe.name
+  self:DefineAssetData()
+  self.tile = self:AddChild(Image(self.atlas, self.item_tex))
 
 	self.recipepopup = self:AddChild(FoodRecipePopup(self.owner, self.recipe))
 	self.recipepopup:SetPosition(-24,-8,0)
@@ -30,6 +33,20 @@ local FoodItem = Class(Widget, function(self, owner, foodcrafting, recipe)
 	self.recipepopup:SetScale(s,s,s)
 
 end)
+
+function FoodItem:DefineAssetData()
+  self.item_tex = self.prefab..'.tex'
+  self.atlas = resolvefilepath("images/inventoryimages.xml")
+  if PREFABDEFINITIONS[self.prefab] then
+    for idx,asset in ipairs(PREFABDEFINITIONS[self.prefab].assets) do
+      if asset.type == "INV_IMAGE" then
+        self.item_tex = asset.file..'.tex'
+      elseif asset.type == "ATLAS" then
+        self.atlas = asset.file
+      end
+    end
+  end
+end
 
 function FoodItem:SetSlot(slot)
 	self.slot = slot

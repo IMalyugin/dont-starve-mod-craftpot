@@ -36,8 +36,6 @@ local FoodCrafting = Class(Widget, function(self, num_slots, owner)
   	cookedmonstermeat = "monstermeat_cooked",
   	cookedmeat = "meat_cooked"
   }
-  self._ingredients = Cooking.ingredients
-  self._tagweights = self:_GetTagWeights()
   --for ingredient, prefab in pairs(self._aliases) do
   --  self._ingredients[ingredient] = self._ingredients[prefab]
   --end
@@ -49,6 +47,10 @@ end)
 
 function FoodCrafting:OnAfterLoad(config)
   self._config = config
+
+  self._ingredients = Cooking.ingredients
+  self._tagweights = self:_GetTagWeights()
+
 	local slot_bgs = {}
 	for slot_idx=1,self.num_slots do
 		table.insert(slot_bgs, self:AddChild(Image(nil)) )
@@ -359,7 +361,7 @@ function FoodCrafting:_UpdateFoodStats(ingdata, num_ing, inv_ings)
 					local name_amt_used = 0
 					if minnames[name] then
 						local name_amt_used = math.min(minnames[name], name_amt)
-						predict = predict + 3*name_amt_used
+						predict = predict + 3*name_amt_used+0.5 -- additional 0.5 is required to increase priority for multi ingredient on top of single ingredient
 					end
 
 					local name_amt_unused = name_amt - name_amt_used
@@ -368,16 +370,14 @@ function FoodCrafting:_UpdateFoodStats(ingdata, num_ing, inv_ings)
 							if mintags[tag] then
 								local tag_amt_used = math.min(mintags[tag], tag_amt*name_amt_unused)
 								mintags[tag] = mintags[tag] - tag_amt_used
-								predict = predict + tag_amt_used * self._tagweights[tag]
+							  predict = predict + tag_amt_used * self._tagweights[tag]+0.5
 							end
 						end
 					end
 				end-- loop ingdata.names
 
 				for tag, amt in pairs(mintags) do
-					if amt and self._tagweights[tag] then
-						recipe.unfulfilled = recipe.unfulfilled + amt * self._tagweights[tag]
-					end
+					recipe.unfulfilled = recipe.unfulfilled + amt * self._tagweights[tag]
 				end
 				recipe.predict = math.max(recipe.predict, predict)
 			end

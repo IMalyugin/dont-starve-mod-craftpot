@@ -2,6 +2,10 @@ local function IsDST()
 	return GLOBAL.TheSim:GetGameID() == "DST"
 end
 
+local function IsClientSim()
+	return IsDST() and GLOBAL.TheNet:GetIsClient()
+end
+
 local function GetPlayer()
 	if IsDST() then
 		return GLOBAL.ThePlayer
@@ -10,9 +14,9 @@ local function GetPlayer()
 	end
 end
 
+
 local require = GLOBAL.require
 local Vector3 = GLOBAL.Vector3
-local GetPlayer = GLOBAL.GetPlayer
 
 local MouseFoodCrafting = require "widgets/mousefoodcrafting"
 local Constants = require "constants"
@@ -24,82 +28,101 @@ Assets = {
 
 local _SimLoaded = false
 local _GameLoaded = false
+local _ControlsLoaded = false
 
-local function OnLoad(player)
-	if player and player.components and not player.components.knownfoods then
-  	player:AddComponent('knownfoods')
+local function OnAfterLoad(controls)
+	if _GameLoaded ~= true or _SimLoaded ~= true or _ControlsLoaded ~= true then
+		return false
 	end
-end
-
-local function OnAfterLoad()
 	local player = GetPlayer()
-
 	if player and player.components and player.components.knownfoods then
 		local config = {lock_uncooked=GetModConfigData("lock_uncooked")}
 		player.components.knownfoods:OnAfterLoad(config)
-    player.HUD.controls.foodcrafting:OnAfterLoad(config)
+		if player.HUD.controls and player.HUD.controls.foodcrafting then
+    	player.HUD.controls.foodcrafting:OnAfterLoad(config, player)
+		elseif controls.foodcrafting then
+			controls.foodcrafting:OnAfterLoad(config, player)
+		end
 	end
 end
 
 local function OnSimLoad()
+	--print("Craftpot ~ OnSimLoad")
 	_SimLoaded = true
-	if _GameLoaded == true then
-		OnAfterLoad()
-	end
+	OnAfterLoad()
 end
 
 local function OnGameLoad()
+	--print("Craftpot ~ OnGameLoad")
 	_GameLoaded = true
-	if _SimLoaded == true then
-		OnAfterLoad()
-	end
+	OnAfterLoad()
 end
-
 
 local function ControlsPostInit(self)
-  self.foodcrafting = self.containerroot:AddChild(MouseFoodCrafting(GetPlayer()))
+	_ControlsLoaded = true
+	GetPlayer():AddComponent('knownfoods')
+  self.foodcrafting = self.containerroot:AddChild(MouseFoodCrafting())
   self.foodcrafting:Hide()
+	OnAfterLoad(self)
 end
 
-local function CookerPostInit(inst)
-	if not inst.components.stewer then return end
+local function ContainerPostConstruct(inst)
+	if not inst.type or inst.type ~= "cooker" then
+		return false
+	end
 
 -- store base methods
-  local onopenfn = inst.components.container.onopenfn
-  local onclosefn = inst.components.container.onclosefn
-	local ondonecookingfn = inst.components.stewer.ondonecooking
+  local onopenfn = inst.Open
+  local onclosefn = inst.Close
+	local getitemsfn = inst.GetItems
+	local onstartcookingfn = inst.widget and inst.widget.buttoninfo.fn
+	local ondonecookingfn = inst.inst.components.stewer and inst.inst.components.stewer.ondonecooking
 
 -- define modded actions
-  local function mod_onopen(inst)
-    if onopenfn then onopenfn(inst) end
-    GetPlayer().HUD.controls.foodcrafting:Open(inst)
+  local function mod_onopen(inst, doer)
+    onopenfn(inst, doer)
+    GetPlayer().HUD.controls.foodcrafting:Open(inst.GetItems and inst or inst.inst)
   end
 
   local function mod_onclose(inst)
-    if onclosefn then onclosefn(inst) end
-    GetPlayer().HUD.controls.foodcrafting:Close(inst)
+    onclosefn(inst)
+    GetPlayer().HUD.controls.foodcrafting:Close(inst.inst)
   end
+
+	local function mod_onstartcooking(inst)
+		-- local doer = inst.components.container.opener
+		local recipe = GetPlayer().HUD.controls.foodcrafting:GetProduct()
+		if recipe ~= nil and recipe.name then
+			GetPlayer().components.knownfoods:IncrementCookCounter(recipe.name)
+		end
+		onstartcookingfn(inst)
+		return items
+	end
 
 	local function mod_ondonecooking(inst)
     if ondonecookingfn then ondonecookingfn(inst) end
 		local foodname = inst.components.stewer.product
 		GetPlayer().components.knownfoods:IncrementCookCounter(foodname)
-  end
+		return items
+	end
 
 	local function cookerchangefn(inst)
-		-- TODO: prevalidate if ingredient contents did not change, to reduce load
-		local HUD = GetPlayer().HUD
-		if HUD then HUD.controls.foodcrafting:SortFoods() end
+		local player = GetPlayer()
+		if player and player.HUD then player.HUD.controls.foodcrafting:SortFoods() end
 	end
 
 -- override methods
-  inst.components.container.onopenfn = mod_onopen
-  inst.components.container.onclosefn = mod_onclose
-	inst.components.stewer.ondonecooking = mod_ondonecooking
+  inst.Open = mod_onopen
+  inst.Close = mod_onclose
+	if onstartcookingfn then
+		inst.widget.buttoninfo.fn = mod_onstartcooking
+	else
+		inst.inst.components.stewer.ondonecooking = mod_ondonecooking
+	end
 
-	inst:ListenForEvent("itemget", cookerchangefn)
-	inst:ListenForEvent("itemlose", cookerchangefn)
-	GetPlayer():ListenForEvent( "itemget", cookerchangefn)
+	inst.inst:ListenForEvent("itemget", cookerchangefn)
+	inst.inst:ListenForEvent("itemlose", cookerchangefn)
+	--GetPlayer():ListenForEvent( "itemget", cookerchangefn)
 	-- TODO: track itemget of additional open inventories
 end
 
@@ -110,9 +133,20 @@ local function FollowCameraPostInit(inst)
 	end
 end
 
+
 -- follow camera modification is required to cancel the scrolling
 AddClassPostConstruct("cameras/followcamera", FollowCameraPostInit)
-AddPlayerPostInit(OnLoad)
+--AddClassPostConstruct("components/container",  ContainerPostConstruct)
+-- first line is used for DST clients, second line for DS/DST Host
+if IsClientSim() then
+	AddClassPostConstruct("components/container_replica",  ContainerPostConstruct)
+else
+	local function PrefabPostInitAny(inst)
+		if not inst.components.stewer then return end
+		ContainerPostConstruct(inst.components.container)
+	end
+	AddPrefabPostInitAny(PrefabPostInitAny)
+end
 
 -- these two loads race each other, last one gets to launch OnAfterLoad
 AddSimPostInit(OnSimLoad) -- fires before game init
@@ -120,4 +154,3 @@ AddGamePostInit(OnGameLoad) -- fires last, unless it is first game launch, then 
 AddClassPostConstruct("widgets/controls", ControlsPostInit)
 
 -- sadly we have to try every prefab ingame, since we just can't bind events onto postinit of stewer.host prefab
-AddPrefabPostInitAny(CookerPostInit)

@@ -1,5 +1,4 @@
-local KnownFoods = Class(function(self, owner)
-  self.owner = owner
+local KnownFoods = Class(function(self)
   self._dtag = 0.5
   self._basiccooker = 'cookpot'
   self._cooker = {} -- openned cooker inst
@@ -586,7 +585,6 @@ function KnownFoods:IncrementCookCounter(foodname)
   	local times_cooked = self._knownfoods[foodname].times_cooked or 0
     self._knownfoods[foodname].times_cooked = times_cooked + 1
   end
-  --self.owner.HUD.controls.foodcrafting:UpdateRecipes()
 end
 
 function KnownFoods:GetKnownFoods()

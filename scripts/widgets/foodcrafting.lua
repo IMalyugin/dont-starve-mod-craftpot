@@ -12,12 +12,8 @@ local ImageButton = require "widgets/imagebutton"
 local FoodSlot = require "widgets/foodslot"--mod
 local FoodItem = require "widgets/fooditem"--mod
 local Cooking = require "cooking"
-local FoodCrafting = Class(Widget, function(self, num_slots, owner)
+local FoodCrafting = Class(Widget, function(self, num_slots)
   Widget._ctor(self, "FoodCrafting")
-
-	self.owner = owner
-	self.knownfoods = self.owner.components.knownfoods
-
   self.bg = self:AddChild(TileBG(HUD_ATLAS, "craft_slotbg.tex"))
 
   --slots
@@ -45,7 +41,9 @@ local FoodCrafting = Class(Widget, function(self, num_slots, owner)
   self.open = false
 end)
 
-function FoodCrafting:OnAfterLoad(config)
+function FoodCrafting:OnAfterLoad(config, owner)
+  self.owner = owner
+	self.knownfoods = self.owner.components.knownfoods
   self._config = config
 
   self._ingredients = Cooking.ingredients
@@ -143,7 +141,7 @@ end
 
 function FoodCrafting:Open(cooker_inst)
 	self._cooker = cooker_inst
-	self._cookername = cooker_inst.prefab
+	self._cookername = cooker_inst.prefab or cooker_inst.inst.prefab
   self._open = true
 	self:Enable()
   self:Show()
@@ -162,10 +160,9 @@ end
 -- only this function can be called from the outside
 function FoodCrafting:SortFoods()
 	if not self._open then return end
-
-	local cooker_ings = self:_GetContainerIngredients(self._cooker.components.container)
+	local cooker_ings = self:_GetEntityIngredients(self._cooker) --(self._cooker.components.container)
 	local cooker_ingdata = self:_GetIngredientValues(cooker_ings)
-	local inv_ings = self:_GetContainerIngredients(self.owner.components.inventory)
+	local inv_ings = self:_GetEntityIngredients(self.owner)
 
 	--local cnt=0
 	--for _,c_inst in pairs(self.owner.HUD.controls.containers) do
@@ -258,6 +255,13 @@ function FoodCrafting:UpdateFoodSlots()
 			self.focusItem = nil
 		end
 	end
+end
+
+function FoodCrafting:GetProduct()
+  if #self.selfoods == 1 then
+    return self.selfoods[1].recipe
+  end
+  return nil
 end
 
 function FoodCrafting:OnControl(control, down)
@@ -426,13 +430,38 @@ function FoodCrafting:_GetTagWeights()
 	return tagweights
 end
 
+function FoodCrafting:_GetEntityIngredients(...)
+  local ings = {}
+  for _,e in ipairs(arg) do
+    local slots = e.GetItems and e:GetItems()
+    if slots == nil and e.components and e.components.container then
+      slots = e.components.container.slots
+    end
+    if slots == nil and e.components and e.components.inventory then
+      slots = e.components.inventory.itemslots
+    end
+
+    if slots == nil then
+      slots = {}
+    end
+
+  	for k,v in pairs(slots) do
+      print(v and v.prefab or "aw")
+			local amt = v.components.stackable and v.components.stackable.stacksize or 1
+    	table.insert(ings, {name=v.prefab,amt=amt})
+  	end
+  end
+  return ings
+end
+
 function FoodCrafting:_GetContainerIngredients(...)
   local ings = {}
 
 	for _,container in ipairs(arg) do
-		local slots = container.slots or container.itemslots or {}
+		local slots = container.slots or container.itemslots or container:GetItems() {}
 
   	for k,v in pairs(slots) do
+      --print(v and v.prefab or "aw")
 			local amt = v.components.stackable and v.components.stackable.stacksize or 1
     	table.insert(ings, {name=v.prefab,amt=amt})
   	end

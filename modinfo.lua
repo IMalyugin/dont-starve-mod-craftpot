@@ -1,6 +1,6 @@
 name = "Craft Pot"
 author = "IvanX"
-version = "0.85"
+version = "0.85m"
 description = "Don't you think cooking and crafting are lot alike?"
 
 priority = -1337
@@ -12,7 +12,7 @@ api_version_dst = 10
 dont_starve_compatible = true
 reign_of_giants_compatible = true
 shipwrecked_compatible = true
---dst_compatible = true
+dst_compatible = true
 
 icon_atlas = "modicon.xml"
 icon = "modicon.tex"
@@ -33,9 +33,9 @@ configuration_options =
     label = "Lock uncooked",
     options =
     {
-        {description = "On", data = true},
         {description = "Off", data = false},
+        {description = "On", data = true},
     },
-    default = "on"
+    default = "Off"
   }
 }

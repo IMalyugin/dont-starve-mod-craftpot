@@ -1,6 +1,6 @@
 name = "Craft Pot"
 author = "IvanX"
-version = "0.85m"
+version = "0.851m"
 description = "Don't you think cooking and crafting are lot alike?"
 
 priority = -1337
@@ -36,6 +36,6 @@ configuration_options =
         {description = "Off", data = false},
         {description = "On", data = true},
     },
-    default = "Off"
+    default = false
   }
 }

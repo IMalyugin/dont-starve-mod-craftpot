@@ -1,3 +1,11 @@
+local function IsDST()
+	return TheSim:GetGameID() == "DST"
+end
+
+local function IsClientSim()
+	return IsDST() and TheNet:GetIsClient()
+end
+
 local KnownFoods = Class(function(self)
   self._dtag = 0.5
   self._basiccooker = 'cookpot'
@@ -5,7 +13,7 @@ local KnownFoods = Class(function(self)
   self._cookername = self._basiccooker
   self._config = {} -- mod config goes in here onafterload
   self._knownfoods = {} -- enchanced format recipes
-  self._exknownfoods = {} -- recipes of mods that were turned off
+  self._loadedfoods = {} -- loaded recipe data
   self._cookerRecipes = {} -- raw format recipes
   self._ingredients = {} -- all known ingredients
   self._alltags = {} -- all known tags
@@ -17,29 +25,50 @@ local KnownFoods = Class(function(self)
   	cookedmeat = "meat_cooked"
   }
 
+  if IsClientSim() then
+    self._filepath = "session/"..(TheNet and TheNet:GetSessionIdentifier() or "INVALID_SESSION").."/"..(TheNet and TheNet:GetUserID() or "INVALID_USERID").."_/knownfoods_data"
+  	self:OnLoad()
+  end
 end)
 
 function KnownFoods:OnSave()
-  local data = {
-    knownfoods = deepcopy(self._knownfoods)
-  }
-  for foodname, recipe in pairs(self._exknownfoods) do
-    data.knownfoods[foodname] = recipe
+  local data = { knownfoods={} }
+  for foodname, recipe in pairs(self._loadedfoods) do
+    data.knownfoods[foodname] = {times_cooked=recipe.times_cooked}
   end
-	return data
+  for foodname, recipe in pairs(self._knownfoods) do
+    data.knownfoods[foodname] = {times_cooked=recipe.times_cooked}
+  end
+  if IsClientSim() then
+    local str = json.encode(data)
+    TheSim:SetPersistentString(self._filepath, str, true)
+  else
+    return data
+  end
 end
 
 function KnownFoods:OnLoad(data)
-	if data then
-    self._loadedRecipes = data.knownfoods
+  if IsClientSim() then
+    -- ClientSim load uses PersistentString data
+    TheSim:GetPersistentString(self._filepath, function(success, strdata)
+      if success then
+        data = json.decode(strdata)
+      end
+    end)
+  else
+    -- MasterSim uses OnLoad data
+  end
+
+  if data and data.knownfoods then
+    self._loadedfoods = data.knownfoods
     local cnt = 0
-    for key, val in pairs(self._loadedRecipes) do
+    for foodname, recipe in pairs(self._loadedfoods) do
       cnt = cnt + 1
     end
     print('Craft Pot ~~~ component loaded '..cnt..' known food recipes')
-	else
+  else
     print('Craft Pot ~~~ component loaded with no data')
-	end
+  end
 end
 
 function KnownFoods:SetCooker(inst)
@@ -148,13 +177,10 @@ end
 function KnownFoods:OnAfterLoad(config)
   self._config = config
   self._Cooking = require "cooking"
-
   self._ingredients = self._Cooking.ingredients
-  --for ingredient, prefab in pairs(self._aliases) do
-    --self._ingredients[ingredient] = self._ingredients[prefab]
-  --end
   self:_FillIngredients()
 
+  self._cookerRecipes = {}
   for cookername,recipes in pairs(self._Cooking.recipes) do
     for foodname,recipe in pairs(recipes) do
       self._cookerRecipes[foodname] = recipe
@@ -162,29 +188,23 @@ function KnownFoods:OnAfterLoad(config)
     end
   end
 
-  -- first add all the loaded recipes
-  if self._loadedRecipes then
-    for foodname, recipe in pairs(self._loadedRecipes) do
-      if self:MinimizeRecipe(foodname, recipe) then
-        self._knownfoods[foodname] = recipe
-      end
-    end
-  end
-
-  --[[[ then add all the simple recipes
-  local simplePreparedFoods = require "simplepreparedfoods"
-  for foodname, recipe in pairs(simplePreparedFoods) do
-    if not self._knownfoods[foodname] and self:MinimizeRecipe(foodname, recipe) then
-      self._knownfoods[foodname] = recipe
-    end
-  end]]
-
-  -- finally extract missing recipes from the raw cookbook
-  local unknownRecipes = self:_GetUnknownRecipes()
-  for foodname, recipe in pairs(unknownRecipes) do
+  -- parse recipes from the raw cookbook
+  for foodname, recipe in pairs(self._cookerRecipes) do
     local rawRecipe = self:_SmartSearch(recipe.test)
     if rawRecipe and self:MinimizeRecipe(foodname, rawRecipe) then
       self._knownfoods[foodname] = rawRecipe
+    end
+  end
+
+  -- then apply loaded recipe data to parsed recipes
+  for foodname, recipe in pairs(self._loadedfoods) do
+    if self._cookerRecipes[foodname] then
+      for param, value in pairs(recipe) do
+        self._knownfoods[foodname][param] = value
+      end
+    else
+      -- validate recipe existence
+      print("Craft Pot ~~~ Could not find global recipe for "..foodname)
     end
   end
 end
@@ -298,15 +318,8 @@ function KnownFoods:_RawToSimple(names, tags)
 end
 
 function KnownFoods:MinimizeRecipe(foodname,recipe)
-  -- save foodname inside of the recipe
-  -- validate recipe existence
-  if not self._cookerRecipes[foodname] then
-    self._exknownfoods[foodname] = recipe
-    print("Craft Pot ~~~ Could not find global recipe for "..foodname)
-    return false
-  end
-
   recipe.name = foodname
+  recipe.times_cooked = 0
 	for k,v in pairs(self._cookerRecipes[foodname]) do
 		recipe[k] = v
 	end
@@ -566,18 +579,6 @@ function KnownFoods:_FillIngredients(num_names)
       end
     end
   end
-end
-
-function KnownFoods:_GetUnknownRecipes()
-  local unknown = {}
-
-  for foodname,recipe in pairs(self._cookerRecipes) do
-    if not self._knownfoods[foodname] then
-      unknown[foodname] = recipe
-    end
-  end
-
-  return unknown
 end
 
 function KnownFoods:IncrementCookCounter(foodname)

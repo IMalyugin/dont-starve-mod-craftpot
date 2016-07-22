@@ -14,6 +14,30 @@ local function GetPlayer()
 	end
 end
 
+local function GetWorld()
+	if IsDST() then
+		return GLOBAL.TheWorld
+	else
+		return GLOBAL.GetWorld()
+	end
+end
+
+local function AddPlayerPostInit(fn)
+	if IsDST() then
+		env.AddPrefabPostInit("world", function(wrld)
+			wrld:ListenForEvent("playeractivated", function(wlrd, player)
+				if player == GLOBAL.ThePlayer then
+					fn(player)
+				end
+			end)
+		end)
+	else
+		env.AddPlayerPostInit(function(player)
+			fn(player)
+		end)
+	end
+end
+
 
 local require = GLOBAL.require
 local Vector3 = GLOBAL.Vector3
@@ -29,9 +53,10 @@ Assets = {
 local _SimLoaded = false
 local _GameLoaded = false
 local _ControlsLoaded = false
+local _PlayerLoaded = false
 
 local function OnAfterLoad(controls)
-	if _GameLoaded ~= true or _SimLoaded ~= true or _ControlsLoaded ~= true then
+	if _GameLoaded ~= true or _SimLoaded ~= true or _PlayerLoaded ~= true or _ControlsLoaded ~= true then
 		return false
 	end
 	local player = GetPlayer()
@@ -46,21 +71,30 @@ local function OnAfterLoad(controls)
 	end
 end
 
+local function OnPlayerLoad(player)
+	_PlayerLoaded = true
+	if not IsDST() then
+		player:AddComponent('knownfoods')
+	end
+	OnAfterLoad()
+end
+
 local function OnSimLoad()
-	--print("Craftpot ~ OnSimLoad")
 	_SimLoaded = true
 	OnAfterLoad()
 end
 
 local function OnGameLoad()
-	--print("Craftpot ~ OnGameLoad")
 	_GameLoaded = true
 	OnAfterLoad()
 end
 
+
 local function ControlsPostInit(self)
 	_ControlsLoaded = true
-	GetPlayer():AddComponent('knownfoods')
+	if IsDST() then
+		GetPlayer():AddComponent('knownfoods')
+	end
   self.foodcrafting = self.containerroot:AddChild(MouseFoodCrafting())
   self.foodcrafting:Hide()
 	OnAfterLoad(self)
@@ -126,6 +160,7 @@ local function ContainerPostConstruct(inst)
 	-- TODO: track itemget of additional open inventories
 end
 
+
 local function FollowCameraPostInit(inst)
 	local old_can_control = inst.CanControl
 	inst.CanControl = function(inst)
@@ -133,10 +168,8 @@ local function FollowCameraPostInit(inst)
 	end
 end
 
-
 -- follow camera modification is required to cancel the scrolling
 AddClassPostConstruct("cameras/followcamera", FollowCameraPostInit)
---AddClassPostConstruct("components/container",  ContainerPostConstruct)
 -- first line is used for DST clients, second line for DS/DST Host
 if IsClientSim() then
 	AddClassPostConstruct("components/container_replica",  ContainerPostConstruct)
@@ -148,9 +181,10 @@ else
 	AddPrefabPostInitAny(PrefabPostInitAny)
 end
 
--- these two loads race each other, last one gets to launch OnAfterLoad
+-- these three loads race each other, last one gets to launch OnAfterLoad
 AddSimPostInit(OnSimLoad) -- fires before game init
-AddGamePostInit(OnGameLoad) -- fires last, unless it is first game launch, then it fires first
+AddGamePostInit(OnGameLoad) -- fires last, unless it is first game launch in DS, then it fires first
+AddPlayerPostInit(OnPlayerLoad) -- fire last in DST, but first in DS, i think
 AddClassPostConstruct("widgets/controls", ControlsPostInit)
 
 -- sadly we have to try every prefab ingame, since we just can't bind events onto postinit of stewer.host prefab

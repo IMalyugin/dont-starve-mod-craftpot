@@ -446,7 +446,7 @@ function FoodCrafting:_GetEntityIngredients(...)
     end
 
   	for k,v in pairs(slots) do
-      print(v and v.prefab or "aw")
+      --print(v and v.prefab or "aw")
 			local amt = v.components.stackable and v.components.stackable.stacksize or 1
     	table.insert(ings, {name=v.prefab,amt=amt})
   	end

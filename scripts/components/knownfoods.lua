@@ -26,7 +26,7 @@ local KnownFoods = Class(function(self)
   }
 
   if IsClientSim() then
-    self._filepath = "session/"..(TheNet and TheNet:GetSessionIdentifier() or "INVALID_SESSION").."/"..(TheNet and TheNet:GetUserID() or "INVALID_USERID").."_/knownfoods_data"
+    self._filepath = "session/"..(TheNet:GetSessionIdentifier() or "INVALID_SESSION").."/"..(TheNet:GetUserID() or "INVALID_USERID").."_/knownfoods_data"
   	self:OnLoad()
   end
 end)

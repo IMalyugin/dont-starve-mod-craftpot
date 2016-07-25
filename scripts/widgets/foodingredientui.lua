@@ -13,7 +13,7 @@ local mainfunctions = require "mainfunctions"
 require "widgets/widgetutil"
 
 local DELTA_TAG = 0.5
-local TEX_TAGS = {meat="Meats",monster="Monster Foods",veggie="Vegetables",fruit="Fruits",egg="Eggs",sweetener="Sweets",inedible="Inedibles",dairy="Dairies",fat="Fat",frozen="Ice",magic="Magic",decoration="Decoration",seeds="Seeds"}
+local TEX_TAGS = {meat="Meats",monster="Monster Foods",veggie="Vegetables",fruit="Fruits",fish="Fish",egg="Eggs",sweetener="Sweets",inedible="Inedibles",dairy="Dairies",fat="Fat",frozen="Ice",magic="Magic",decoration="Decoration",seed="Seeds"}
 
 local ALIASES = {
   smallmeat_cooked = "cookedsmallmeat",
@@ -96,20 +96,12 @@ function FoodIngredientUI:DefineAssetData()
 			end
 		end
 	else
+		self.atlas = resolvefilepath("images/food_tags.xml")
 		if TEX_TAGS[self.prefab] then
-			self.atlas = resolvefilepath("images/food_tags.xml")
 			self.localized_name = TEX_TAGS[self.prefab]
 		else
-			if PREFABDEFINITIONS[self.prefab] then
-				for idx,asset in ipairs(PREFABDEFINITIONS[self.prefab].assets) do
-					if asset.type == "INV_IMAGE" then
-						self.item_tex = asset.file..'.tex'
-					elseif asset.type == "ATLAS" then
-						self.atlas = asset.file
-					end
-				end
-			end
-		end
+      self.item_tex = 'unknown.tex'
+    end
 	end
 end
 

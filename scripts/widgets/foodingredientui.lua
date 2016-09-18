@@ -13,7 +13,58 @@ local mainfunctions = require "mainfunctions"
 require "widgets/widgetutil"
 
 local DELTA_TAG = 0.5
-local TEX_TAGS = {meat="Meats",monster="Monster Foods",veggie="Vegetables",fruit="Fruits",fish="Fish",egg="Eggs",sweetener="Sweets",inedible="Inedibles",dairy="Dairies",fat="Fat",frozen="Ice",magic="Magic",decoration="Decoration",seed="Seeds"}
+local TEX_TAGS = {
+  meat="Meats",
+  veggie="Vegetables",
+  fish="Fish",
+  sweetener="Sweets",
+
+  monster="Monster Foods",
+  fruit="Fruits",
+  egg="Eggs",
+  inedible="Inedibles",
+
+  frozen="Ice",
+  magic="Magic",
+  decoration="Decoration",
+  seed="Seeds",
+
+  dairy="Dairies",
+  fat="Fat",
+
+  alkaline="Alkaline",
+  flora="Flora",
+  fungus="Fungi",
+  leek="Leek",
+  citrus="Citrus",
+
+  dairy_alt="Dairy",
+  fat_alt="Fat",
+
+  mushrooms="Mushrooms",
+  nut="Nuts",
+  poultry="Poultries",
+  pungent="Pungents",
+  grapes="Grapes",
+
+  decoration_alt="Decoration",
+  seed_alt="Seeds",
+
+  root="Roots",
+  seafood="Seafood",
+  shellfish="Shellfish",
+  spices="Spices",
+  wings="Wings",
+
+  monster_alt="Monster Foods",
+  sweetener_alt="Sweets",
+
+  squash="Squash",
+  starch="Starch",
+  tuber="Tuber",
+  precook="Precooked",
+  cactus="Cactus",
+}
 
 local ALIASES = {
   smallmeat_cooked = "cookedsmallmeat",

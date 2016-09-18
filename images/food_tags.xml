@@ -1,17 +1,68 @@
-<Atlas><Texture filename="food_tags.tex" /><Elements>
-    <Element name="meat.tex" u1="0" u2="0.25" v1="0.75" v2="1" />
-    <Element name="monster.tex" u1="0" u2="0.25" v1="0.5" v2="0.75" />
-    <Element name="veggie.tex" u1="0.25" u2="0.5" v1="0.75" v2="1" />
-    <Element name="fruit.tex" u1="0.25" u2="0.5" v1="0.5" v2="0.75" />
-    <Element name="fish.tex" u1="0.5" u2="0.75" v1="0.75" v2="1" />
-    <Element name="egg.tex" u1="0.5" u2="0.75" v1="0.5" v2="0.75" />
-    <Element name="sweetener.tex" u1="0.75" u2="1" v1="0.75" v2="1" />
-    <Element name="inedible.tex" u1="0.75" u2="1" v1="0.5" v2="0.75" />
-    <Element name="frozen.tex" u1="0" u2="0.25" v1="0.25" v2="0.5" />
-    <Element name="magic.tex" u1="0.25" u2="0.5" v1="0.25" v2="0.5" />
-    <Element name="decoration.tex" u1="0.5" u2="0.75" v1="0.25" v2="0.5" />
-    <Element name="seed.tex" u1="0.75" u2="1" v1="0.25" v2="0.5" />
-    <Element name="dairy.tex" u1="0" u2="0.25" v1="0" v2="0.25" />
-    <Element name="fat.tex" u1="0.25" u2="0.5" v1="0" v2="0.25" />
-    <Element name="unknown.tex" u1="0.75" u2="1" v1="0" v2="0.25" />
-</Elements></Atlas>
+<Atlas><Texture filename="food_tags.tex" />
+  <Elements>
+
+  <Element name="meat.tex" u1="0" u2="0.125" v1="0.875" v2="1" />
+ 
+  <Element name="veggie.tex" u1="0.125" u2="0.25" v1="0.875" v2="1" />
+  <Element name="fish.tex" u1="0.25" u2="0.375" v1="0.875" v2="1" />
+  <Element name="sweetener.tex" u1="0.375" u2="0.5" v1="0.875" v2="1" />
+
+  <Element name="monster.tex" u1="0" u2="0.125" v1="0.75" v2="0.875" />
+
+  <Element name="fruit.tex" u1="0.125" u2="0.25" v1="0.75" v2="0.875" />
+
+  <Element name="egg.tex" u1="0.25" u2="0.375" v1="0.75" v2="0.875" />
+  <Element name="inedible.tex" u1="0.375" u2="0.5" v1="0.75" v2="0.875" />
+
+
+  <Element name="frozen.tex" u1="0" u2="0.125" v1="0.625" v2="0.75" />
+  <Element name="magic.tex" u1="0.125" u2="0.25" v1="0.625" v2="0.75" />
+  <Element name="decoration.tex" u1="0.25" u2="0.375" v1="0.625" v2="0.75" />
+  <Element name="seed.tex" u1="0.375" u2="0.5" v1="0.625" v2="0.75" />
+
+
+  <Element name="dairy.tex" u1="0" u2="0.125" v1="0.5" v2="0.625" />
+ 
+  <Element name="fat.tex" u1="0.125" u2="0.25" v1="0.5" v2="0.625" />
+ 
+
+  <Element name="unknown.tex" u1="0.375" u2="0.5" v1="0.5" v2="0.625" />
+
+  <Element name="alkaline.tex" u1="0" u2="0.125" v1="0.375" v2="05" />
+  <Element name="flora.tex" u1="0.125" u2="0.25" v1="0.375" v2="0.5" />
+  <Element name="fungus.tex" u1="0.25" u2="0.375" v1="0.375" v2="0.5" />
+  <Element name="leek.tex" u1="0.375" u2="0.5" v1="0.375" v2="0.5" />
+  <Element name="citrus.tex" u1="0.5" u2="0.625" v1="0.375" v2="0.5" />
+
+  <Element name="dairy_alt.tex" u1="0.75" u2="0.875" v1="0.375" v2="0.5" />
+  <Element name="fat_alt.tex" u1="0.875" u2="1" v1="0.375" v2="0.5" />
+
+  <Element name="mushrooms.tex" u1="0" u2="0.125" v1="0.25" v2="0.375" />
+  <Element name="nut.tex" u1="0.125" u2="0.25" v1="0.25" v2="0.375" />
+  <Element name="poultry.tex" u1="0.25" u2="0.375" v1="0.25" v2="0.375" />
+  <Element name="pungent.tex" u1="0.375" u2="0.5" v1="0.25" v2="0.375" />
+  <Element name="grapes.tex" u1="0.5" u2="0.625" v1="0.25" v2="0.375" />
+
+  <Element name="decoration_alt.tex" u1="0.75" u2="0.875" v1="0.25" v2="0.375" />
+  <Element name="seed_alt.tex" u1="0.875" u2="1" v1="0.25" v2="0.375" />
+
+  <Element name="root.tex" u1="0" u2="0.125" v1="0.125" v2="0.25" />
+  <Element name="seafood.tex" u1="0.125" u2="0.25" v1="0.125" v2="0.25" />
+  <Element name="shellfish.tex" u1="0.25" u2="0.375" v1="0.125" v2="0.25" />
+  <Element name="spices.tex" u1="0.375" u2="0.5" v1="0.125" v2="0.25" />
+  <Element name="wings.tex" u1="0.5" u2="0.625" v1="0.125" v2="0.25" />
+
+  <Element name="monster_alt.tex" u1="0.75" u2="0.875" v1="0.125" v2="0.25" />
+  <Element name="sweetener_alt.tex" u1="0.875" u2="1" v1="0.125" v2="0.25" />
+
+  <Element name="squash.tex" u1="0" u2="0.125" v1="0" v2="0.125" />
+  <Element name="starch.tex" u1="0.125" u2="0.25" v1="0" v2="0.125" />
+  <Element name="tuber.tex" u1="0.25" u2="0.375" v1="0" v2="0.125" />
+  <Element name="precook.tex" u1="0.375" u2="0.5" v1="0" v2="0.125" />
+  <Element name="cactus.tex" u1="0.5" u2="0.625" v1="0" v2="0.125" />
+
+  <Element name="inedible_alt.tex" u1="0.875" u2="1" v1="0" v2="0.125" />
+    
+  
+</Elements>
+</Atlas>

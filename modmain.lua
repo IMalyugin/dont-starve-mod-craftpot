@@ -115,12 +115,17 @@ local function ContainerPostConstruct(inst)
 -- define modded actions
   local function mod_onopen(inst, doer)
     onopenfn(inst, doer)
-    GetPlayer().HUD.controls.foodcrafting:Open(inst.GetItems and inst or inst.inst)
+		if doer == GetPlayer() then
+    	doer.HUD.controls.foodcrafting:Open(inst.GetItems and inst or inst.inst)
+		end
   end
 
   local function mod_onclose(inst)
     onclosefn(inst)
-    GetPlayer().HUD.controls.foodcrafting:Close(inst.inst)
+		local player = GetPlayer()
+		if player and player.HUD and player.HUD.controls and player.HUD.controls.foodcrafting and inst then
+    	player.HUD.controls.foodcrafting:Close(inst.inst)
+		end
   end
 
 	local function mod_onstartcooking(inst)

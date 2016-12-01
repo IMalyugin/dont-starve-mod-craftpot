@@ -37,8 +37,9 @@ local FoodCrafting = Class(Widget, function(self, num_slots)
   --end
 
 	self.idx = -1
+  self._overflow = Input:ControllerAttached() and 3 or 1
 
-  self.open = false
+  self._open = false
 end)
 
 function FoodCrafting:OnAfterLoad(config, owner)
@@ -92,8 +93,11 @@ function FoodCrafting:SetOrientation(horizontal)
     end
 
 		if not self.horizontal then
-	    self:SetPosition(305,0,0)
-			self:SetPosition(280,0,0)
+      if TheInput:ControllerAttached() then
+        self:SetPosition(305,0,0)
+      else
+        self:SetPosition(280,0,0)
+      end
 	  end
 
     self.bg:SetNumTiles(self.num_slots)
@@ -122,7 +126,7 @@ end
 
 function FoodCrafting:FoodFocus(slot_idx)
 	local focusIdx = slot_idx+self.idx
-	if focusIdx <= 0 or focusIdx > #self.selfoods then
+	if focusIdx < 1 or focusIdx > #self.selfoods then
 		return false
 	end
 	local focusItem = self.selfoods[focusIdx]
@@ -145,14 +149,21 @@ function FoodCrafting:Open(cooker_inst)
   self._open = true
 	self:Enable()
   self:Show()
-
 	--if cooker_inst ~= self.last_cooker or self.sortneeded or self.filterneeded then
-  	self:SortFoods()
+  self:SortFoods()
+  if TheInput:ControllerAttached() then
+    self:FoodFocus(4)
+  end
 	--end
+end
+
+function FoodCrafting:IsOpen()
+  return self._open
 end
 
 function FoodCrafting:Close(cooker_inst)
   self._open = false
+  self._focused = false
   self:Disable()
   self:Hide()
 end
@@ -217,21 +228,21 @@ function FoodCrafting:UpdateFoodSlots()
 		foodslot:ClearFood()
 	end
 
-	if self.idx > #self.selfoods - (self.num_slots )+1  then
-		self.idx = #self.selfoods - (self.num_slots)+1
+	if self.idx > #self.selfoods - (self.num_slots ) + self._overflow  then
+		self.idx = #self.selfoods - (self.num_slots) + self._overflow
 	end
 
-  if self.idx < -1 then
-    self.idx = -1
+  if self.idx < -self._overflow then
+    self.idx = -self._overflow
   end
 
-	if self.idx > -1 then
+	if self.idx >  -self._overflow then
 		self.downbutton:Enable()
 	else
 		self.downbutton:Disable()
 	end
 
-	if #self.selfoods < self.idx + self.num_slots then
+	if #self.selfoods < self.idx + self.num_slots + self._overflow then
 		self.upbutton:Disable()
     else
 		self.upbutton:Enable()
@@ -267,37 +278,63 @@ end
 function FoodCrafting:OnControl(control, down)
   if FoodCrafting._base.OnControl(self, control, down) then return true end
 
-  if down and self.focus then
-    if control == CONTROL_MAP_ZOOM_IN then
-      self:ScrollDown()
-      return true
-    elseif control == CONTROL_MAP_ZOOM_OUT then
-      self:ScrollUp()
-      return true
+  if down then
+    if self._focused then
+      if control == CONTROL_MAP_ZOOM_IN then
+        self:ScrollDown()
+        return true
+      elseif control == CONTROL_MAP_ZOOM_OUT then
+        self:ScrollUp()
+        return true
+      end
     end
+    if control == CONTROL_OPEN_INVENTORY then
+      if self._focused then
+        self._focused = false
+        self.owner.HUD.controls:SetDark(false)
+        SetPause(false)
+
+        --self.focusItem:SetScale(Vector3(1.1, 1.1, 1.1))
+        self:SetScale(Vector3(0.5, 0.5, 0.5))
+      else
+        self._focused = true
+        self.owner.HUD.controls:SetDark(true)
+    		SetPause(true)
+
+        self:SetScale(Vector3(0.6, 0.6, 0.6))
+      end
+    end
+  else -- not down
+    if control == CONTROL_CANCEL and self._focused then
+      self._focused = false
+  	end
+  end
+end
+
+function FoodCrafting:DoControl(control)
+  if control == CONTROL_MOVE_UP then
+    self:ScrollDown()
+  elseif control == CONTROL_MOVE_DOWN then
+    self:ScrollUp()
   end
 end
 
 function FoodCrafting:ScrollUp()
-  if not IsPaused() then
-    local oldidx = self.idx
-    self.idx = self.idx + 1
-    self:UpdateFoodSlots()
-    if self.idx ~= oldidx then
-      self.owner.SoundEmitter:PlaySound("dontstarve/HUD/craft_up")
-    end
+  local oldidx = self.idx
+  self.idx = self.idx + 1
+  self:UpdateFoodSlots()
+  if self.idx ~= oldidx then
+    self.owner.SoundEmitter:PlaySound("dontstarve/HUD/craft_up")
   end
   --self:UpdateRecipes()
 end
 
 function FoodCrafting:ScrollDown()
-  if not IsPaused() then
-    local oldidx = self.idx
-    self.idx = self.idx - 1
-    self:UpdateFoodSlots()
-    if self.idx ~= oldidx then
-        self.owner.SoundEmitter:PlaySound("dontstarve/HUD/craft_down")
-    end
+  local oldidx = self.idx
+  self.idx = self.idx - 1
+  self:UpdateFoodSlots()
+  if self.idx ~= oldidx then
+      self.owner.SoundEmitter:PlaySound("dontstarve/HUD/craft_down")
   end
 end
 
@@ -309,7 +346,6 @@ end
 function FoodCrafting:OnLoseFocus()
   FoodCrafting._base.OnLoseFocus(self)
 	self._focused = false
-
 	--[[if self.focusItem then
 		self.focusItem:HidePopup()
 		self.focusItem = nil

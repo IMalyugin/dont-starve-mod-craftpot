@@ -46,6 +46,8 @@ function FoodCrafting:OnAfterLoad(config, owner)
   self.owner = owner
 	self.knownfoods = self.owner.components.knownfoods
   self._config = config
+  self.CONTROL_SCROLL_UP = self._config.invert_controller and CONTROL_INVENTORY_DOWN or CONTROL_MOVE_DOWN
+  self.CONTROL_SCROLL_DOWN = self._config.invert_controller and CONTROL_INVENTORY_UP or CONTROL_MOVE_UP
 
   self._ingredients = Cooking.ingredients
   self._tagweights = self:_GetTagWeights()
@@ -312,9 +314,9 @@ function FoodCrafting:OnControl(control, down)
 end
 
 function FoodCrafting:DoControl(control)
-  if control == CONTROL_MOVE_UP then
+  if control == self.CONTROL_SCROLL_DOWN then
     self:ScrollDown()
-  elseif control == CONTROL_MOVE_DOWN then
+  elseif control == self.CONTROL_SCROLL_UP then
     self:ScrollUp()
   end
 end

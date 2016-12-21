@@ -62,7 +62,7 @@ local function OnAfterLoad(controls)
 	end
 	local player = GetPlayer()
 	if player and player.components and player.components.knownfoods then
-		local config = {lock_uncooked=GetModConfigData("lock_uncooked")}
+		local config = {lock_uncooked=GetModConfigData("lock_uncooked"), invert_controller=GetModConfigData("invert_controller")}
 		player.components.knownfoods:OnAfterLoad(config)
 		if player.HUD.controls and player.HUD.controls.foodcrafting then
     	player.HUD.controls.foodcrafting:OnAfterLoad(config, player)
@@ -220,10 +220,10 @@ AddClassPostConstruct("widgets/inventorybar", function(inst)
 		for action, controls in pairs(actions) do
 			local old_cursor_action = inst[action]
 			inst[action] = function(self)
-				if not inst.owner.HUD.controls.foodcrafting:IsFocused() or TheInput:IsControlPressed(controls[1]) then
+				if not inst.owner.HUD.controls.foodcrafting:IsFocused() or TheInput:IsControlPressed(controls[GetModConfigData("invert_controller") and 2 or 1]) then
 					old_cursor_action(self)
 				else
-					inst.owner.HUD.controls.foodcrafting:DoControl(controls[2])
+					inst.owner.HUD.controls.foodcrafting:DoControl(controls[GetModConfigData("invert_controller") and 1 or 2])
 				end
 			end
 		end

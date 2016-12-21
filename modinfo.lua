@@ -1,6 +1,6 @@
 name = "Craft Pot"
 author = "IvanX"
-version = "0.9"
+version = "0.901"
 description = "Don't you think cooking and crafting are lot alike?"
 
 priority = -1337
@@ -31,6 +31,16 @@ configuration_options =
   {
     name = "lock_uncooked",
     label = "Lock uncooked",
+    options =
+    {
+        {description = "Off", data = false},
+        {description = "On", data = true},
+    },
+    default = false
+  },
+  {
+    name = "invert_contorller",
+    label = "Invert Controller",
     options =
     {
         {description = "Off", data = false},

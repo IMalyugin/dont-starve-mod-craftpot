@@ -1,6 +1,6 @@
 name = "Craft Pot"
 author = "IvanX"
-version = "0.901"
+version = "0.9.1"
 description = "Don't you think cooking and crafting are lot alike?"
 
 priority = -1337
@@ -39,7 +39,7 @@ configuration_options =
     default = false
   },
   {
-    name = "invert_contorller",
+    name = "invert_controller",
     label = "Invert Controller",
     options =
     {

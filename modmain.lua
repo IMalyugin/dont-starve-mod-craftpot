@@ -97,38 +97,47 @@ local function ControlsPostInit(self)
 	if IsDST() then
 		GetPlayer():AddComponent('knownfoods')
 	end
-  self.foodcrafting = self.containerroot:AddChild(MouseFoodCrafting())
-  self.foodcrafting:Hide()
-	OnAfterLoad(self)
+    self.foodcrafting = self.containerroot:AddChild(MouseFoodCrafting())
+    self.foodcrafting:Hide()
+    OnAfterLoad(self)
 end
 
 local function ContainerPostConstruct(inst)
+    -- special case for when cookpot container_replica is not initialized properly
+    -- we initialize it as a cookpot
+	if not inst.type and inst.WidgetSetup then
+        inst:WidgetSetup('cookpot')
+	end
+
+	
+	-- only apply mod to components that are cookers and that have no widget
 	if not inst.type or inst.type ~= "cooker" or (not inst.widget or not inst.widget.buttoninfo) and IsDST() then
 		return false
 	end
 
--- store base methods
-  local onopenfn = inst.Open
-  local onclosefn = inst.Close
+	-- store base methods
+	local onopenfn = inst.Open
+	local onclosefn = inst.Close
 	local getitemsfn = inst.GetItems
 	local onstartcookingfn = inst.widget and inst.widget.buttoninfo.fn
 	local ondonecookingfn = inst.inst.components.stewer and inst.inst.components.stewer.ondonecooking
 
--- define modded actions
-  local function mod_onopen(inst, doer)
-    onopenfn(inst, doer)
-		if doer == GetPlayer() then
-    	doer.HUD.controls.foodcrafting:Open(inst.GetItems and inst or inst.inst)
-		end
-  end
+	-- define modded actions
+	local function mod_onopen(inst, doer)
+	    onopenfn(inst, doer)
 
-  local function mod_onclose(inst)
-    onclosefn(inst)
+		if doer == GetPlayer() then
+		doer.HUD.controls.foodcrafting:Open(inst.GetItems and inst or inst.inst)
+		end
+	end
+
+	local function mod_onclose(inst)
+	    onclosefn(inst)
 		local player = GetPlayer()
 		if player and player.HUD and player.HUD.controls and player.HUD.controls.foodcrafting and inst then
-    	player.HUD.controls.foodcrafting:Close(inst.inst)
+		player.HUD.controls.foodcrafting:Close(inst.inst)
 		end
-  end
+	end
 
 	local function mod_onstartcooking(inst)
 		-- local doer = inst.components.container.opener
@@ -152,9 +161,9 @@ local function ContainerPostConstruct(inst)
 		if player and player.HUD then player.HUD.controls.foodcrafting:SortFoods() end
 	end
 
--- override methods
-  inst.Open = mod_onopen
-  inst.Close = mod_onclose
+	-- override methods
+	inst.Open = mod_onopen
+	inst.Close = mod_onclose
 	if onstartcookingfn then
 		inst.widget.buttoninfo.fn = mod_onstartcooking
 	else
@@ -177,7 +186,8 @@ end
 
 -- follow camera modification is required to cancel the scrolling
 AddClassPostConstruct("cameras/followcamera", FollowCameraPostInit)
--- first line is used for DST clients, second line for DS/DST Host
+
+-- first block is used for DST clients, second - for DS/DST Host
 if IsClientSim() then
 	AddClassPostConstruct("components/container_replica",  ContainerPostConstruct)
 else
@@ -186,6 +196,7 @@ else
 			ContainerPostConstruct(inst.components.container)
 		end
 	end
+	-- sadly we have to try every prefab ingame, since we just can't bind events onto postinit of stewer.host prefab
 	AddPrefabPostInitAny(PrefabPostInitAny)
 end
 
@@ -220,10 +231,13 @@ AddClassPostConstruct("widgets/inventorybar", function(inst)
 		for action, controls in pairs(actions) do
 			local old_cursor_action = inst[action]
 			inst[action] = function(self)
-				if not inst.owner.HUD.controls.foodcrafting:IsFocused() or TheInput:IsControlPressed(controls[GetModConfigData("invert_controller") and 2 or 1]) then
+				if not inst.owner.HUD.controls.foodcrafting:IsFocused()
+					or TheInput:IsControlPressed(controls[GetModConfigData("invert_controller") and 2 or 1])
+				then
 					old_cursor_action(self)
 				else
-					inst.owner.HUD.controls.foodcrafting:DoControl(controls[GetModConfigData("invert_controller") and 1 or 2])
+					inst.owner.HUD.controls.foodcrafting
+						:DoControl(controls[GetModConfigData("invert_controller") and 1 or 2])
 				end
 			end
 		end
@@ -235,5 +249,3 @@ AddSimPostInit(OnSimLoad) -- fires before game init
 AddGamePostInit(OnGameLoad) -- fires last, unless it is first game launch in DS, then it fires first
 AddPlayerPostInit(OnPlayerLoad) -- fire last in DST, but first in DS, i think
 AddClassPostConstruct("widgets/controls", ControlsPostInit)
-
--- sadly we have to try every prefab ingame, since we just can't bind events onto postinit of stewer.host prefab

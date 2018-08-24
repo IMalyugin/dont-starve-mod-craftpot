@@ -65,7 +65,7 @@ local function OnAfterLoad(controls)
 		local config = {lock_uncooked=GetModConfigData("lock_uncooked"), invert_controller=GetModConfigData("invert_controller")}
 		player.components.knownfoods:OnAfterLoad(config)
 		if player.HUD.controls and player.HUD.controls.foodcrafting then
-    	player.HUD.controls.foodcrafting:OnAfterLoad(config, player)
+    		player.HUD.controls.foodcrafting:OnAfterLoad(config, player)
 		elseif controls.foodcrafting then
 			controls.foodcrafting:OnAfterLoad(config, player)
 		end
@@ -102,11 +102,20 @@ local function ControlsPostInit(self)
     OnAfterLoad(self)
 end
 
-local function ContainerPostConstruct(inst)
-    -- special case for when cookpot container_replica is not initialized properly
-    -- we initialize it as a cookpot
-	if not inst.type and inst.WidgetSetup then
-        inst:WidgetSetup('cookpot')
+local function ContainerPostConstruct(inst, prefab)
+    -- if inst.type is not defined, it would mean that OnEntityReplicated has not been called yet
+    if not inst.type and not inst.__craftPotPatched then
+        -- this variable prevents possibility of endless loop for ContainerPostConstruct
+        inst.__craftPotPatched = True
+
+        -- thus we need to delay ContainerPostConstruct call until it is fully initialized
+        if prefab and prefab.OnEntityReplicated then
+            originalEntityReplicatedHandler = prefab.OnEntityReplicated
+            prefab.OnEntityReplicated = function(...)
+                originalEntityReplicatedHandler(...)
+                ContainerPostConstruct(inst, prefab)
+            end
+        end
 	end
 
 	

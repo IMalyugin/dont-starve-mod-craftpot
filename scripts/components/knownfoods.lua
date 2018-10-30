@@ -1,9 +1,9 @@
 local function IsDST()
-	return TheSim:GetGameID() == "DST"
+  return TheSim:GetGameID() == "DST"
 end
 
 local function IsClientSim()
-	return IsDST() and TheNet:GetIsClient()
+  return IsDST() and TheNet:GetIsClient()
 end
 
 local KnownFoods = Class(function(self)
@@ -20,14 +20,14 @@ local KnownFoods = Class(function(self)
   self._allnames = {} -- all known names
 
   self._aliases = {
-  	cookedsmallmeat = "smallmeat_cooked",
-  	cookedmonstermeat = "monstermeat_cooked",
-  	cookedmeat = "meat_cooked"
+    cookedsmallmeat = "smallmeat_cooked",
+    cookedmonstermeat = "monstermeat_cooked",
+    cookedmeat = "meat_cooked"
   }
 
   if IsClientSim() then
     self._filepath = "session/"..(TheNet:GetSessionIdentifier() or "INVALID_SESSION").."/"..(TheNet:GetUserID() or "INVALID_USERID").."_/knownfoods_data"
-  	self:OnLoad()
+    self:OnLoad()
   end
 end)
 
@@ -133,10 +133,10 @@ function KnownFoods:_Composition(list) -- only compose 1 level, because otherwis
       for _, uidx in ipairs(data.used) do
         if not alt[uidx] then
           alt[uidx] = data.mix
-				elseif alt[uidx].amt then
-					alt[uidx] = {alt[uidx], data.mix}
-				else
-			    table.insert(alt[uidx], data.mix)
+        elseif alt[uidx].amt then
+          alt[uidx] = {alt[uidx], data.mix}
+        else
+          table.insert(alt[uidx], data.mix)
         end
       end
     end
@@ -320,9 +320,9 @@ end
 function KnownFoods:MinimizeRecipe(foodname,recipe)
   recipe.name = foodname
   recipe.times_cooked = 0
-	for k,v in pairs(self._cookerRecipes[foodname]) do
-		recipe[k] = v
-	end
+  for k,v in pairs(self._cookerRecipes[foodname]) do
+    recipe[k] = v
+  end
 
   -- validate used names and tags
   local names = {}
@@ -521,21 +521,21 @@ function KnownFoods:MinimizeRecipe(foodname,recipe)
     mintags[mintag] = buffer
   end
 
-	recipe.minmix = self:_Composition(recipe.minlist)
-	recipe.maxmix = self:_Composition({{names=recipe.maxnames, tags=recipe.maxtags}})
+  recipe.minmix = self:_Composition(recipe.minlist)
+  recipe.maxmix = self:_Composition({{names=recipe.maxnames, tags=recipe.maxtags}})
 
-	for _, minset in ipairs(recipe.minlist) do
-		for name, name_amt in pairs(minset.names) do
-			for tag, tag_amt in pairs(self._ingredients[name].tags) do
-				if minset.tags[tag] then
-					minset.tags[tag] = minset.tags[tag] - tag_amt * name_amt
-					if minset.tags[tag] <= 0 then
-						minset.tags[tag] = nil
-					end
-				end
-			end
-		end
-	end
+  for _, minset in ipairs(recipe.minlist) do
+    for name, name_amt in pairs(minset.names) do
+      for tag, tag_amt in pairs(self._ingredients[name].tags) do
+        if minset.tags[tag] then
+          minset.tags[tag] = minset.tags[tag] - tag_amt * name_amt
+          if minset.tags[tag] <= 0 then
+            minset.tags[tag] = nil
+          end
+        end
+      end
+    end
+  end
 
   return true
 end
@@ -583,7 +583,7 @@ end
 
 function KnownFoods:IncrementCookCounter(foodname)
   if self._knownfoods[foodname] then
-  	local times_cooked = self._knownfoods[foodname].times_cooked or 0
+    local times_cooked = self._knownfoods[foodname].times_cooked or 0
     self._knownfoods[foodname].times_cooked = times_cooked + 1
   end
 end
@@ -594,18 +594,18 @@ end
 
 -- function used by foocrafting
 function KnownFoods:UpdateRecipe(recipe, ingdata)
-	recipe.reqsmatch = false -- all the min requirements are met
-	recipe.reqsmismatch = false -- all the max requirements are met
-	recipe.readytocook = false -- all ingredients match recipe and cookpot is loaded
-	recipe.specialcooker = recipe.cookername ~= self._basiccooker -- does the recipe require special cooker
-	recipe.unlocked = not self._config.lock_uncooked or recipe.times_cooked and recipe.times_cooked > 0
+  recipe.reqsmatch = false -- all the min requirements are met
+  recipe.reqsmismatch = false -- all the max requirements are met
+  recipe.readytocook = false -- all ingredients match recipe and cookpot is loaded
+  recipe.specialcooker = recipe.cookername ~= self._basiccooker -- does the recipe require special cooker
+  recipe.unlocked = not self._config.lock_uncooked or recipe.times_cooked and recipe.times_cooked > 0
 
-	if not self:_TestMax(recipe.name, ingdata.names, ingdata.tags) then
-		recipe.reqsmismatch = true
-	end
-	if self:_Test(recipe.name, ingdata.names, ingdata.tags) then
-		recipe.reqsmatch = true
-	end
+  if not self:_TestMax(recipe.name, ingdata.names, ingdata.tags) then
+    recipe.reqsmismatch = true
+  end
+  if self:_Test(recipe.name, ingdata.names, ingdata.tags) then
+    recipe.reqsmatch = true
+  end
 end
 
 return KnownFoods

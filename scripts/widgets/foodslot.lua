@@ -20,19 +20,19 @@ local FoodRecipePopup = require "widgets/foodrecipepopup"
 local FoodSlot = Class(Widget, function(self, owner, foodcrafting, slot_idx, bgimage)
     Widget._ctor(self, "FoodSlot")
     self.owner = owner
-		self.foodcrafting = foodcrafting
+    self.foodcrafting = foodcrafting
 
     self.atlas = HUD_ATLAS
 
-		self.bgimage = bgimage
-		self.bgimage:SetTexture(self.atlas, "craft_slot.tex")
-		self.fgimage = self:AddChild(Image("images/hud.xml", "craft_slot_locked.tex"))
-		self.fgimage:Hide()
+    self.bgimage = bgimage
+    self.bgimage:SetTexture(self.atlas, "craft_slot.tex")
+    self.fgimage = self:AddChild(Image("images/hud.xml", "craft_slot_locked.tex"))
+    self.fgimage:Hide()
 
-		self.reqsmatch = false
+    self.reqsmatch = false
 
-		self.slot_idx = slot_idx
-		self:ClearFood()
+    self.slot_idx = slot_idx
+    self:ClearFood()
 end)
 
 -- foreground is initialized later to overlay the slot icons, also childs are added to root class
@@ -41,30 +41,30 @@ end
 
 function FoodSlot:OnGainFocus()
   FoodSlot._base.OnGainFocus(self)
-	if self.slot_idx then
-  	self.foodcrafting:FoodFocus(self.slot_idx)
-	end
+  if self.slot_idx then
+    self.foodcrafting:FoodFocus(self.slot_idx)
+  end
 end
 
 function FoodSlot:ClearFood()
-	if self.fooditem then
-		self.fooditem:Hide()
-	end
-	self.bgimage:SetTexture(self.atlas, "craft_slot.tex")
-	self.fgimage:Hide()
-	self.fooditem = nil
+  if self.fooditem then
+    self.fooditem:Hide()
+  end
+  self.bgimage:SetTexture(self.atlas, "craft_slot.tex")
+  self.fgimage:Hide()
+  self.fooditem = nil
 end
 
 function FoodSlot:SetFood(fooditem)
-	self.fooditem = fooditem
-	self.fooditem:SetPosition(self:GetPosition())
-	self.fooditem:Show()
-	self.fooditem:Refresh()
-	self:Refresh()
+  self.fooditem = fooditem
+  self.fooditem:SetPosition(self:GetPosition())
+  self.fooditem:Show()
+  self.fooditem:Refresh()
+  self:Refresh()
 end
 
 function FoodSlot:Refresh()
-	local recipe = self.fooditem.recipe
+  local recipe = self.fooditem.recipe
   local foodname = recipe.name
   local unlocked = recipe.unlocked
   local reqsmatch = recipe.reqsmatch
@@ -96,7 +96,7 @@ function FoodSlot:Refresh()
             self.fgimage:SetTexture(hud_atlas, "craft_slot_locked.tex")
         end
 
-				self.bgimage:SetTexture(self.atlas, "craft_slot.tex")
+        self.bgimage:SetTexture(self.atlas, "craft_slot.tex")
         self.fgimage:Show()
         --if not readytocook then self.bgimage:SetTexture(self.atlas, "craft_slot.tex") end -- Make sure we clear out the place bg if it's a new tab
       end

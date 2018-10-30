@@ -12,28 +12,28 @@ local Text = require "widgets/text"
 local FoodIngredientUI = require "widgets/foodingredientui"
 
 local SIZES = {
-	icon = 64,
-	space = 8,
-	alter = 10,
-	bracket = 15,
---	contw = 286,
-	contw = 210,
-	conth = 105
+  icon = 64,
+  space = 8,
+  alter = 10,
+  bracket = 15,
+--  contw = 286,
+  contw = 210,
+  conth = 105
 }
 local EPSILON = 0.01
 
 local FoodRecipePopup = Class(Widget, function(self, owner, recipe)
     Widget._ctor(self, "Recipe Popup")
 
-		self.owner = owner
-		self.recipe = recipe
-		self.ingredients = {}
+    self.owner = owner
+    self.recipe = recipe
+    self.ingredients = {}
 
     local hud_atlas = resolvefilepath( "images/recipe_hud.xml" )
     --self.atlas = resolvefilepath("images/inventoryimages.xml")
 
     self.bg = self:AddChild(Image())
-		self.bg:SetPosition(210,16,0)
+    self.bg:SetPosition(210,16,0)
     self.bg:SetTexture(hud_atlas, 'recipe_hud.tex')
 
 
@@ -44,7 +44,7 @@ local FoodRecipePopup = Class(Widget, function(self, owner, recipe)
       self.name = self.contents:AddChild(Text(UIFONT, 42 * 0.8))
     else
       self.name = self.contents:AddChild(Text(UIFONT, 42))
-	  end
+    end
 
     self.name:SetPosition(3, 0, 0)
     if JapaneseOnPS4() then
@@ -52,18 +52,18 @@ local FoodRecipePopup = Class(Widget, function(self, owner, recipe)
       self.name:EnableWordWrap(true)
     end
 
-		local localized_foodname = STRINGS.NAMES[string.upper(self.recipe.name)] or recipe.name
-	  self.name:SetString(localized_foodname)
+    local localized_foodname = STRINGS.NAMES[string.upper(self.recipe.name)] or recipe.name
+    self.name:SetString(localized_foodname)
 
     if JapaneseOnPS4() then
       self.excludes_title = self.contents:AddChild(Text(UIFONT, 32 * 0.8))
     else
       self.excludes_title = self.contents:AddChild(Text(UIFONT, 32))
-	  end
+    end
 
-		self.hunger = self.contents:AddChild(Text(BODYTEXTFONT, 28))
-		self.sanity = self.contents:AddChild(Text(BODYTEXTFONT, 28))
-		self.health = self.contents:AddChild(Text(BODYTEXTFONT, 28))
+    self.hunger = self.contents:AddChild(Text(BODYTEXTFONT, 28))
+    self.sanity = self.contents:AddChild(Text(BODYTEXTFONT, 28))
+    self.health = self.contents:AddChild(Text(BODYTEXTFONT, 28))
 
     self.excludes_title:SetString('Limit')
 
@@ -73,209 +73,209 @@ local FoodRecipePopup = Class(Widget, function(self, owner, recipe)
       --self.excludes_title:EnableWordWrap(true)
     end
 
-		self._minwrap = self.contents:AddChild(Widget(""))
-		self._minwrap:SetPosition(0,-27,0)
+    self._minwrap = self.contents:AddChild(Widget(""))
+    self._minwrap:SetPosition(0,-27,0)
 
-		self._maxwrap = self.contents:AddChild(Widget(""))
-		self._maxwrap:SetPosition(0,-186,0)
+    self._maxwrap = self.contents:AddChild(Widget(""))
+    self._maxwrap:SetPosition(0,-186,0)
 
-		self:_CreateLayout(self._minwrap, self.recipe.minmix, true)
-		self:_CreateLayout(self._maxwrap, self.recipe.maxmix, false)
+    self:_CreateLayout(self._minwrap, self.recipe.minmix, true)
+    self:_CreateLayout(self._maxwrap, self.recipe.maxmix, false)
 end)
 
 function FoodRecipePopup:Update(cookerIngs)
-	for _, ui in ipairs(self.ingredients) do
-		local alias,type = ui:GetIngredient()
-		ui:Update(cookerIngs[type..'s'][alias] and cookerIngs[type..'s'][alias] or 0)
-	end
+  for _, ui in ipairs(self.ingredients) do
+    local alias,type = ui:GetIngredient()
+    ui:Update(cookerIngs[type..'s'][alias] and cookerIngs[type..'s'][alias] or 0)
+  end
 
-	local recipe = self.recipe
+  local recipe = self.recipe
 
-	self.hunger:SetPosition(5,82,0)
-	self.hunger:SetString((not recipe.unlocked) and '?' or type(recipe.hunger) == 'number' and recipe.hunger~=0 and string.format("%g",(math.floor(recipe.hunger*10+0.5)/10)) or '-')
-	if recipe.unlocked and type(recipe.hunger) == 'number' and recipe.hunger < 0 then
-		self.hunger:SetColour(1,0,0,1)
-		self.hunger:SetPosition(2,82,0)
-	end
+  self.hunger:SetPosition(5,82,0)
+  self.hunger:SetString((not recipe.unlocked) and '?' or type(recipe.hunger) == 'number' and recipe.hunger~=0 and string.format("%g",(math.floor(recipe.hunger*10+0.5)/10)) or '-')
+  if recipe.unlocked and type(recipe.hunger) == 'number' and recipe.hunger < 0 then
+    self.hunger:SetColour(1,0,0,1)
+    self.hunger:SetPosition(2,82,0)
+  end
 
-	self.sanity:SetPosition(-73,54,0)
-	self.sanity:SetString(not recipe.unlocked and '?' or type(recipe.sanity) == 'number' and recipe.sanity~=0 and string.format("%g",(math.floor(recipe.sanity*10+0.5)/10)) or '-')
-	if recipe.unlocked and type(recipe.sanity) == 'number' and recipe.sanity < 0 then
-		self.sanity:SetColour(1,0,0,1)
-		self.sanity:SetPosition(-76,53,0)
-	end
+  self.sanity:SetPosition(-73,54,0)
+  self.sanity:SetString(not recipe.unlocked and '?' or type(recipe.sanity) == 'number' and recipe.sanity~=0 and string.format("%g",(math.floor(recipe.sanity*10+0.5)/10)) or '-')
+  if recipe.unlocked and type(recipe.sanity) == 'number' and recipe.sanity < 0 then
+    self.sanity:SetColour(1,0,0,1)
+    self.sanity:SetPosition(-76,53,0)
+  end
 
-	self.health:SetPosition(84,54,0)
-	self.health:SetString(not recipe.unlocked and '?' or type(recipe.health) == 'number' and recipe.health~=0 and string.format("%g",(math.floor(recipe.health*10+0.5)/10)) or '-')
-	if recipe.unlocked and type(recipe.health) == 'number' and recipe.health < 0 then
-		self.health:SetPosition(81,53,0)
-		self.health:SetColour(1,0,0,1)
-	end
+  self.health:SetPosition(84,54,0)
+  self.health:SetString(not recipe.unlocked and '?' or type(recipe.health) == 'number' and recipe.health~=0 and string.format("%g",(math.floor(recipe.health*10+0.5)/10)) or '-')
+  if recipe.unlocked and type(recipe.health) == 'number' and recipe.health < 0 then
+    self.health:SetPosition(81,53,0)
+    self.health:SetColour(1,0,0,1)
+  end
 end
 
 function FoodRecipePopup:_CreateLayout(wrapper, mix, is_min)
-	local sequence = self:_BuildSequence(mix, {})
-	local groups = self:_BuildGroups(sequence)
-	local zoom,linewidth = self:_FindZoom(groups)
+  local sequence = self:_BuildSequence(mix, {})
+  local groups = self:_BuildGroups(sequence)
+  local zoom,linewidth = self:_FindZoom(groups)
 
-	local gwidth  = SIZES.contw / zoom
-	local left, top = 0, 0
+  local gwidth  = SIZES.contw / zoom
+  local left, top = 0, 0
 
-	for idx,group in ipairs(groups) do
-		-- insert element
-		local offset = 0
-		local component_size = 0
+  for idx,group in ipairs(groups) do
+    -- insert element
+    local offset = 0
+    local component_size = 0
 
-		if left + group.size > gwidth + EPSILON then -- overflow x
-			left = 0
-			top = top - SIZES.icon - SIZES.space
-		end
+    if left + group.size > gwidth + EPSILON then -- overflow x
+      left = 0
+      top = top - SIZES.icon - SIZES.space
+    end
 
-		for _,component in ipairs(group.sequence) do
-			if component == '(' or component == ')' then
-				component_size = SIZES.bracket
-			elseif component == ',' then
-				component_size = SIZES.alter
-			elseif component == '_' then
-				component_size = SIZES.space
-			else
-				component_size = SIZES.icon
-			end
-			offset = offset + component_size
-			if component ~= '_' then
-				self:_InsertComponent(wrapper,component,left+offset-(type(component) == 'table' and component_size/2 or 0),top-SIZES.icon/2,is_min)
-			end
-		end
+    for _,component in ipairs(group.sequence) do
+      if component == '(' or component == ')' then
+        component_size = SIZES.bracket
+      elseif component == ',' then
+        component_size = SIZES.alter
+      elseif component == '_' then
+        component_size = SIZES.space
+      else
+        component_size = SIZES.icon
+      end
+      offset = offset + component_size
+      if component ~= '_' then
+        self:_InsertComponent(wrapper,component,left+offset-(type(component) == 'table' and component_size/2 or 0),top-SIZES.icon/2,is_min)
+      end
+    end
 
-		left = left + group.size + SIZES.space
+    left = left + group.size + SIZES.space
 
-	end -- groups
-	wrapper:SetPosition(wrapper:GetPosition() - Vector3(linewidth/2,0,0))
-	wrapper:SetScale(zoom,zoom,zoom)
+  end -- groups
+  wrapper:SetPosition(wrapper:GetPosition() - Vector3(linewidth/2,0,0))
+  wrapper:SetScale(zoom,zoom,zoom)
 end
 
 function FoodRecipePopup:_BuildSequence(mix, arr)
-	for cid, conj in ipairs(mix) do
-		if conj.amt then
-			table.insert(arr, conj) -- icon of conjuction
-		else
-			local brackets = (#arr ~= 0 or #mix == 0)
-			if brackets then
-				table.insert(arr, '(')
-			end
-			for aid, alt in ipairs(conj) do
-				if aid > 1 then
-					table.insert(arr, ',') -- or
-				end
-				if alt.amt then
-					table.insert(arr, alt) -- icon of alternation
-				else
-					self:_BuildSequence(alt, arr)
-				end
-			end
-			if brackets then
-				table.insert(arr, ')')
-			end
-		end
-	end
-	return arr
+  for cid, conj in ipairs(mix) do
+    if conj.amt then
+      table.insert(arr, conj) -- icon of conjuction
+    else
+      local brackets = (#arr ~= 0 or #mix == 0)
+      if brackets then
+        table.insert(arr, '(')
+      end
+      for aid, alt in ipairs(conj) do
+        if aid > 1 then
+          table.insert(arr, ',') -- or
+        end
+        if alt.amt then
+          table.insert(arr, alt) -- icon of alternation
+        else
+          self:_BuildSequence(alt, arr)
+        end
+      end
+      if brackets then
+        table.insert(arr, ')')
+      end
+    end
+  end
+  return arr
 end
 
 function FoodRecipePopup:_BuildGroups(sequence)
-	local groups = {}
-	local group = {sequence={},size=0}
-	local prev = '^'
+  local groups = {}
+  local group = {sequence={},size=0}
+  local prev = '^'
 
-	for idx, symbol in ipairs(sequence) do
-		-- possible group end, unless near a bracket or comma
-		if prev ~= '^' and (symbol ~= ')' and prev ~= '(') and symbol ~= ',' then
-				table.insert(groups, group)
-				group = {sequence={}, size=0}
-		end
+  for idx, symbol in ipairs(sequence) do
+    -- possible group end, unless near a bracket or comma
+    if prev ~= '^' and (symbol ~= ')' and prev ~= '(') and symbol ~= ',' then
+        table.insert(groups, group)
+        group = {sequence={}, size=0}
+    end
 
-		table.insert(group.sequence, symbol)
-		if symbol == '(' or symbol == ')' then
-			group.size = group.size + SIZES.bracket
-		elseif symbol == ',' then
-			group.size = group.size + SIZES.alter
-		else
-			group.size = group.size + SIZES.icon
-		end
+    table.insert(group.sequence, symbol)
+    if symbol == '(' or symbol == ')' then
+      group.size = group.size + SIZES.bracket
+    elseif symbol == ',' then
+      group.size = group.size + SIZES.alter
+    else
+      group.size = group.size + SIZES.icon
+    end
 
-		prev = symbol
-	end
+    prev = symbol
+  end
 
-	-- append last group
-	--table.insert(group.sequence, '_')
-	--group.size = group.size + SIZES.space
-	table.insert(groups, group)
+  -- append last group
+  --table.insert(group.sequence, '_')
+  --group.size = group.size + SIZES.space
+  table.insert(groups, group)
 
-	return groups
+  return groups
 end
 
 -- retuns zoom, maxwidth
 function FoodRecipePopup:_FindZoom(groups)
-	local zoom, newzoom, maxwidth = 1, 0, 0
+  local zoom, newzoom, maxwidth = 1, 0, 0
 
-	while true do
-		local gwidth  = SIZES.contw / zoom
-		local gheight = SIZES.conth / zoom -- add&sub space
-		local width,height = 0,SIZES.icon
+  while true do
+    local gwidth  = SIZES.contw / zoom
+    local gheight = SIZES.conth / zoom -- add&sub space
+    local width,height = 0,SIZES.icon
 
-		newzoom, maxwidth = 0, 0
+    newzoom, maxwidth = 0, 0
 
-		local found = true
-		local idx = 1
+    local found = true
+    local idx = 1
 
-		while idx <= #groups do
-			local group = groups[idx]
-			width = width + group.size
+    while idx <= #groups do
+      local group = groups[idx]
+      width = width + group.size
 
-			if width > gwidth + EPSILON then -- overflow x
-				newzoom = math.max(newzoom, zoom * gwidth / width)
-				width = 0
-				height = height + SIZES.icon + SIZES.space
-				if height > gheight + EPSILON then -- overflow y
-					newzoom = math.max(newzoom, zoom * gheight / height)
-					found = false
-					break
-				end
-			else
-				maxwidth = math.max(maxwidth, zoom * width)
-				width = width + SIZES.space
-				idx = idx + 1
-			end
-		end-- while idx < #groups
-		if found then
-			return zoom,maxwidth
-		end
-		-- otherwise take newzoom and try again
-		zoom = newzoom
-	end -- while true
+      if width > gwidth + EPSILON then -- overflow x
+        newzoom = math.max(newzoom, zoom * gwidth / width)
+        width = 0
+        height = height + SIZES.icon + SIZES.space
+        if height > gheight + EPSILON then -- overflow y
+          newzoom = math.max(newzoom, zoom * gheight / height)
+          found = false
+          break
+        end
+      else
+        maxwidth = math.max(maxwidth, zoom * width)
+        width = width + SIZES.space
+        idx = idx + 1
+      end
+    end-- while idx < #groups
+    if found then
+      return zoom,maxwidth
+    end
+    -- otherwise take newzoom and try again
+    zoom = newzoom
+  end -- while true
 end
 
 function FoodRecipePopup:_InsertComponent(wrapper, component, left, top, is_min)
-	local element, fontsize, fontfamily
-	if type(component) == 'table' then
-		element = FoodIngredientUI(component, is_min, self.owner)
-		element:SetPosition(left,top,0)
-		table.insert(self.ingredients, element)
-	else
-		if component == ',' then
-			fontsize = 73
-			top = top - 8
-			left = left + 2
-			fontfamily = DEFAULTFONT
-		else
-			fontsize = 73
-			top = top - 8
-			fontfamily = UIFONT
-		end
-		element = self.contents:AddChild(Text(fontfamily, fontsize))
-		element:SetString(component)
-		element:SetPosition(left,top,0)
-	end
-	wrapper:AddChild(element)
+  local element, fontsize, fontfamily
+  if type(component) == 'table' then
+    element = FoodIngredientUI(component, is_min, self.owner)
+    element:SetPosition(left,top,0)
+    table.insert(self.ingredients, element)
+  else
+    if component == ',' then
+      fontsize = 73
+      top = top - 8
+      left = left + 2
+      fontfamily = DEFAULTFONT
+    else
+      fontsize = 73
+      top = top - 8
+      fontfamily = UIFONT
+    end
+    element = self.contents:AddChild(Text(fontfamily, fontsize))
+    element:SetString(component)
+    element:SetPosition(left,top,0)
+  end
+  wrapper:AddChild(element)
 end
 
 --[[function FoodRecipePopup:Refresh()

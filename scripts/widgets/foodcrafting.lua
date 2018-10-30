@@ -193,18 +193,18 @@ function FoodCrafting:SortFoods()
 
 	table.sort(self.allfoods, function(a,b)
     if a.recipe.correctcooker ~= b.recipe.correctcooker then return a.recipe.correctcooker end
-    if a.recipe.readytocook ~= b.recipe.readytocook then return a.recipe.readytocook end
-    if b.recipe.name == "wetgoop" then return true elseif a.recipe.name == "wetgoop" then return false end
+		if a.recipe.readytocook ~= b.recipe.readytocook then return a.recipe.readytocook end
+		if b.recipe.name == "wetgoop" then return true elseif a.recipe.name == "wetgoop" then return false end
 
-    --if a.recipe.reqsmatch ~= b.recipe.reqsmatch then return a.recipe.reqsmatch end
+		--if a.recipe.reqsmatch ~= b.recipe.reqsmatch then return a.recipe.reqsmatch end
 
-    --if a.recipe.unlocked ~= b.recipe.unlocked then return a.recipe.unlocked end
-    --if a.recipe.reqsmismatch ~= b.recipe.reqsmismatch then return a.recipe.reqsmismatch end
+		--if a.recipe.unlocked ~= b.recipe.unlocked then return a.recipe.unlocked end
+		--if a.recipe.reqsmismatch ~= b.recipe.reqsmismatch then return a.recipe.reqsmismatch end
 		if a.recipe.predict ~= b.recipe.predict then return a.recipe.predict > b.recipe.predict end
 		if a.recipe.unfulfilled ~= b.recipe.unfulfilled then return a.recipe.unfulfilled < b.recipe.unfulfilled end
-    if a.recipe.priority ~= b.recipe.priority then return a.recipe.priority > b.recipe.priority end
+		if a.recipe.priority ~= b.recipe.priority then return a.recipe.priority > b.recipe.priority end
 		return a.recipe.name > b.recipe.name
-  end)
+	end)
 
 	self:FilterFoods()
 end

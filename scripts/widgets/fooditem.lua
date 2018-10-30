@@ -18,19 +18,19 @@ local mainfunctions = require "mainfunctions"
 local FoodItem = Class(Widget, function(self, owner, foodcrafting, recipe)
   Widget._ctor(self, "FoodItem")
   self.owner = owner
-	self.foodcrafting = foodcrafting
-	self.recipe = recipe
-	self.slot = nil
+  self.foodcrafting = foodcrafting
+  self.recipe = recipe
+  self.slot = nil
 
   self.prefab = self.recipe.name
   self:DefineAssetData()
   self.tile = self:AddChild(Image(self.atlas, self.item_tex))
 
-	self.recipepopup = self:AddChild(FoodRecipePopup(self.owner, self.recipe))
-	self.recipepopup:SetPosition(-24,-8,0)
-	self.recipepopup:Hide()
-	local s = 1.60
-	self.recipepopup:SetScale(s,s,s)
+  self.recipepopup = self:AddChild(FoodRecipePopup(self.owner, self.recipe))
+  self.recipepopup:SetPosition(-24,-8,0)
+  self.recipepopup:Hide()
+  local s = 1.60
+  self.recipepopup:SetScale(s,s,s)
 
 end)
 
@@ -49,11 +49,11 @@ function FoodItem:DefineAssetData()
 end
 
 function FoodItem:SetSlot(slot)
-	self.slot = slot
+  self.slot = slot
 end
 
 function FoodItem:ShowPopup(cookerIngs)
-	self.recipepopup:Update(cookerIngs)
+  self.recipepopup:Update(cookerIngs)
   self.recipepopup:Show()
 end
 
@@ -63,24 +63,24 @@ end
 
 function FoodItem:OnGainFocus()
   FoodItem._base.OnGainFocus(self)
-	if self.slot and self.slot.slot_idx then
-  	self.foodcrafting:FoodFocus(self.slot.slot_idx)
-	end
+  if self.slot and self.slot.slot_idx then
+    self.foodcrafting:FoodFocus(self.slot.slot_idx)
+  end
 end
 
 function FoodItem:Refresh()
-	local recipe = self.recipe
+  local recipe = self.recipe
   local foodname = recipe.name
   local unlocked = recipe.unlocked
   local reqsmatch = recipe.reqsmatch
   local readytocook = recipe.readytocook
   local correctcooker = recipe.correctcooker
 
-	if (readytocook or reqsmatch ) and unlocked then
-		self.tile:SetTint(1,1,1,1)
-	else
-		self.tile:SetTint(0,0,0,1)
-	end
+  if (readytocook or reqsmatch ) and unlocked then
+    self.tile:SetTint(1,1,1,1)
+  else
+    self.tile:SetTint(0,0,0,1)
+  end
 end
 
 

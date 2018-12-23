@@ -136,34 +136,34 @@ local function ContainerPostConstruct(inst, prefab)
   local ondonecookingfn = inst.inst.components.stewer and inst.inst.components.stewer.ondonecooking
 
   -- define modded actions
-  local function mod_onopen(inst, doer)
-      onopenfn(inst, doer)
+  local function mod_onopen(inst, doer, ...)
+      onopenfn(inst, doer, ...)
 
     if doer == GetPlayer() then
     doer.HUD.controls.foodcrafting:Open(inst.GetItems and inst or inst.inst)
     end
   end
 
-  local function mod_onclose(inst)
-      onclosefn(inst)
+  local function mod_onclose(inst, ...)
+      onclosefn(inst, ...)
     local player = GetPlayer()
     if player and player.HUD and player.HUD.controls and player.HUD.controls.foodcrafting and inst then
     player.HUD.controls.foodcrafting:Close(inst.inst)
     end
   end
 
-  local function mod_onstartcooking(inst)
+  local function mod_onstartcooking(inst, ...)
     -- local doer = inst.components.container.opener
     local recipe = GetPlayer().HUD.controls.foodcrafting:GetProduct()
     if recipe ~= nil and recipe.name then
       GetPlayer().components.knownfoods:IncrementCookCounter(recipe.name)
     end
-    onstartcookingfn(inst)
+    onstartcookingfn(inst, ...)
     return items
   end
 
-  local function mod_ondonecooking(inst)
-    if ondonecookingfn then ondonecookingfn(inst) end
+  local function mod_ondonecooking(inst, ...)
+    if ondonecookingfn then ondonecookingfn(inst, ...) end
     local foodname = inst.components.stewer.product
     GetPlayer().components.knownfoods:IncrementCookCounter(foodname)
     return items
@@ -192,8 +192,8 @@ end
 
 local function FollowCameraPostInit(inst)
   local old_can_control = inst.CanControl
-  inst.CanControl = function(inst)
-    return old_can_control(inst) and not GetPlayer().HUD.controls.foodcrafting:IsFocused()
+  inst.CanControl = function(inst, ...)
+    return old_can_control(inst, ...) and not GetPlayer().HUD.controls.foodcrafting:IsFocused()
   end
 end
 
@@ -223,8 +223,8 @@ AddClassPostConstruct("screens/playerhud", function(inst)
     end]]
 
     local old_on_control = inst.OnControl
-    inst.OnControl = function(self, control, down)
-      old_on_control(self, control, down)
+    inst.OnControl = function(self, control, down, ...)
+      old_on_control(self, control, down, ...)
       if inst.controls.foodcrafting:IsOpen() then
         inst.controls.foodcrafting:OnControl(control, down)
       end
@@ -243,11 +243,11 @@ AddClassPostConstruct("widgets/inventorybar", function(inst)
     }
     for action, controls in pairs(actions) do
       local old_cursor_action = inst[action]
-      inst[action] = function(self)
+      inst[action] = function(self, ...)
         if not inst.owner.HUD.controls.foodcrafting:IsFocused()
           or TheInput:IsControlPressed(controls[GetModConfigData("invert_controller") and 2 or 1])
         then
-          old_cursor_action(self)
+          old_cursor_action(self, ...)
         else
           inst.owner.HUD.controls.foodcrafting
             :DoControl(controls[GetModConfigData("invert_controller") and 1 or 2])

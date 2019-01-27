@@ -40,11 +40,9 @@ end
 
 
 local require = GLOBAL.require
-local Vector3 = GLOBAL.Vector3
 local TheInput = GLOBAL.TheInput
 
 local MouseFoodCrafting = require "widgets/mousefoodcrafting"
-local Constants = require "constants"
 
 Assets = {
   Asset("ATLAS", "images/food_tags.xml"),

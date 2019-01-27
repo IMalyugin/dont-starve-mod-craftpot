@@ -2,18 +2,17 @@ require "class"
 
 local Widget = require "widgets/widget"
 
-local TileBG = require "widgets/tilebg"
-local InventorySlot = require "widgets/invslot"
 local Image = require "widgets/image"
-local ImageButton = require "widgets/imagebutton"
-
-local TabGroup = require "widgets/tabgroup"
-local UIAnim = require "widgets/uianim"
-local Text = require "widgets/text"
---local FoodTile = require "widgets/foodtile"
 local FoodRecipePopup = require "widgets/foodrecipepopup"
 
-local mainfunctions = require "mainfunctions"
+-- GetInventoryItemAtlas is the new way of getting item atlas in porkland
+local GetInventoryItemAtlas = function(item)
+  if TheSim:GetGameID() == "DS" and IsDLCEnabled(PORKLAND_DLC) then
+    return GetInventoryItemAtlas(item)
+  end
+  return resolvefilepath("images/inventoryimages.xml")
+end
+
 
 local FoodItem = Class(Widget, function(self, owner, foodcrafting, recipe)
   Widget._ctor(self, "FoodItem")
@@ -36,8 +35,11 @@ end)
 
 function FoodItem:DefineAssetData()
   self.item_tex = self.prefab..'.tex'
-  self.atlas = resolvefilepath("images/inventoryimages.xml")
-  if PREFABDEFINITIONS[self.prefab] then
+  self.atlas = GetInventoryItemAtlas(self.item_tex)
+  if PREFABDEFINITIONS[self.prefab] and not (
+      TheSim.AtlasContains and
+      TheSim:AtlasContains(self.atlas, self.item_tex)
+  ) then
     for idx,asset in ipairs(PREFABDEFINITIONS[self.prefab].assets) do
       if asset.type == "INV_IMAGE" then
         self.item_tex = asset.file..'.tex'
@@ -70,11 +72,9 @@ end
 
 function FoodItem:Refresh()
   local recipe = self.recipe
-  local foodname = recipe.name
   local unlocked = recipe.unlocked
   local reqsmatch = recipe.reqsmatch
   local readytocook = recipe.readytocook
-  local correctcooker = recipe.correctcooker
 
   if (readytocook or reqsmatch ) and unlocked then
     self.tile:SetTint(1,1,1,1)

@@ -427,12 +427,12 @@ function FoodCrafting:_UpdateFoodStats(ingdata, num_ing, inv_ings)
 		end
 
 		-- calculate what can be cooked
-		for idx, fooditem in ipairs(self.allfoods) do
-			local recipe = fooditem.recipe
-			for k,v in ipairs(ingdata) do
-
-			end
-		end
+		--for idx, fooditem in ipairs(self.allfoods) do
+		--	local recipe = fooditem.recipe
+		--	for k,v in ipairs(ingdata) do
+		--
+		--	end
+		--end
 	end
 
 end

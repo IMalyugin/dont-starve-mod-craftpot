@@ -2,16 +2,7 @@ require "class"
 
 local Widget = require "widgets/widget"
 
-local TileBG = require "widgets/tilebg"
-local InventorySlot = require "widgets/invslot"
 local Image = require "widgets/image"
-local ImageButton = require "widgets/imagebutton"
-
-local TabGroup = require "widgets/tabgroup"
-local UIAnim = require "widgets/uianim"
-local Text = require "widgets/text"
---local FoodTile = require "widgets/foodtile"
-local FoodRecipePopup = require "widgets/foodrecipepopup"
 
 -- Overlay ordering:
 --  foodcrafting->bgimage

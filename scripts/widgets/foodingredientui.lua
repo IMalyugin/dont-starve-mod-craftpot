@@ -1,4 +1,5 @@
 require "class"
+global("FOODTAGDEFINITIONS")
 
 local TileBG = require "widgets/tilebg"
 local InventorySlot = require "widgets/invslot"
@@ -8,63 +9,11 @@ local Widget = require "widgets/widget"
 local TabGroup = require "widgets/tabgroup"
 local UIAnim = require "widgets/uianim"
 local Text = require "widgets/text"
-
+local GetInventoryItemAtlas = require "utils/getinventoryitematlas"
 local mainfunctions = require "mainfunctions"
 require "widgets/widgetutil"
 
 local DELTA_TAG = 0.5
-local TEX_TAGS = {
-  meat="Meats",
-  veggie="Vegetables",
-  fish="Fish",
-  sweetener="Sweets",
-
-  monster="Monster Foods",
-  fruit="Fruits",
-  egg="Eggs",
-  inedible="Inedibles",
-
-  frozen="Ice",
-  magic="Magic",
-  decoration="Decoration",
-  seed="Seeds",
-
-  dairy="Dairies",
-  fat="Fat",
-
-  alkaline="Alkaline",
-  flora="Flora",
-  fungus="Fungi",
-  leek="Leek",
-  citrus="Citrus",
-
-  dairy_alt="Dairy",
-  fat_alt="Fat",
-
-  mushrooms="Mushrooms",
-  nut="Nuts",
-  poultry="Poultries",
-  pungent="Pungents",
-  grapes="Grapes",
-
-  decoration_alt="Decoration",
-  seed_alt="Seeds",
-
-  root="Roots",
-  seafood="Seafood",
-  shellfish="Shellfish",
-  spices="Spices",
-  wings="Wings",
-
-  monster_alt="Monster Foods",
-  sweetener_alt="Sweets",
-
-  squash="Squash",
-  starch="Starch",
-  tuber="Tuber",
-  precook="Precooked",
-  cactus="Cactus",
-}
 
 local ALIASES = {
   smallmeat_cooked = "cookedsmallmeat",
@@ -133,7 +82,7 @@ end
 
 function FoodIngredientUI:DefineAssetData()
   self.item_tex = self.prefab..'.tex'
-  self.atlas = resolvefilepath("images/inventoryimages.xml")
+  self.atlas = GetInventoryItemAtlas(self.item_tex)
   self.localized_name = STRINGS.NAMES[string.upper(self.prefab)] or self.prefab
 
   if self.is_name then
@@ -147,9 +96,17 @@ function FoodIngredientUI:DefineAssetData()
       end
     end
   else
-    self.atlas = resolvefilepath("images/food_tags.xml")
-    if TEX_TAGS[self.prefab] then
-      self.localized_name = TEX_TAGS[self.prefab]
+    local tagData = FOODTAGDEFINITIONS[self.prefab]
+    if tagData then
+      if tagData.atlas then
+        self.atlas = resolvefilepath(tagData.atlas)
+      end
+      if tagData.tex then
+        self.item_tex = tagData.tex
+      end
+      if tagData.name then
+        self.localized_name = STRINGS.NAMES[string.upper(self.prefab)] or tagData.name
+      end
     else
       self.item_tex = 'unknown.tex'
     end

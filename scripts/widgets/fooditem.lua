@@ -5,14 +5,7 @@ local Widget = require "widgets/widget"
 local Image = require "widgets/image"
 local FoodRecipePopup = require "widgets/foodrecipepopup"
 
--- GetInventoryItemAtlas is the new way of getting item atlas in porkland
-local GetInventoryItemAtlas = function(item)
-  if TheSim:GetGameID() == "DS" and IsDLCEnabled(PORKLAND_DLC) then
-    return GetInventoryItemAtlas(item)
-  end
-  return resolvefilepath("images/inventoryimages.xml")
-end
-
+local GetInventoryItemAtlas = require "utils/getinventoryitematlas"
 
 local FoodItem = Class(Widget, function(self, owner, foodcrafting, recipe)
   Widget._ctor(self, "FoodItem")

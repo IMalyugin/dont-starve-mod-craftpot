@@ -43,6 +43,7 @@ local require = GLOBAL.require
 local TheInput = GLOBAL.TheInput
 
 local MouseFoodCrafting = require "widgets/mousefoodcrafting"
+require "ingredienttags"
 
 Assets = {
   Asset("ATLAS", "images/food_tags.xml"),

@@ -8,7 +8,8 @@ FOODTAGDEFINITIONS = FOODTAGDEFINITIONS or {}
 -- Function performs merge, so it is safe to call multiple times or with different data
 --
 -- So Far TagData only takes following keys: atlas, tex, name
-local AddFoodTag = function(tag, data)
+global("AddFoodTag")
+AddFoodTag = function(tag, data)
   local mergedData = FOODTAGDEFINITIONS[tag] or {}
 
   for k, v in pairs(data) do
@@ -69,6 +70,3 @@ AddFoodTag('starch', { name="Starch", atlas="images/food_tags.xml" })
 AddFoodTag('tuber', { name="Tuber", atlas="images/food_tags.xml" })
 AddFoodTag('precook', { name="Precooked", atlas="images/food_tags.xml" })
 AddFoodTag('cactus', { name="Cactus", atlas="images/food_tags.xml" })
-
-global("AddFoodTag")
-AddFoodTag = AddFoodTag

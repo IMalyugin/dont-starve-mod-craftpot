@@ -1,9 +1,9 @@
 name = "Craft Pot"
 author = "IvanX"
-version = "0.9.6"
+version = "0.10.0"
 description = "Don't you think cooking and crafting are lot alike?"
 
-priority = -1337
+priority = 1337
 
 forumthread = ""
 api_version = 6

@@ -7,23 +7,25 @@ local FoodRecipePopup = require "widgets/foodrecipepopup"
 
 local GetInventoryItemAtlas = require "utils/getinventoryitematlas"
 
-local FoodItem = Class(Widget, function(self, owner, foodcrafting, recipe)
+local FoodItem = Class(Widget, function(self, owner, foodcrafting, recipe, hasPopup)
   Widget._ctor(self, "FoodItem")
   self.owner = owner
   self.foodcrafting = foodcrafting
   self.recipe = recipe
   self.slot = nil
+  self.hasPopup = hasPopup
 
   self.prefab = self.recipe.name
   self:DefineAssetData()
   self.tile = self:AddChild(Image(self.atlas, self.item_tex))
 
-  self.recipepopup = self:AddChild(FoodRecipePopup(self.owner, self.recipe))
-  self.recipepopup:SetPosition(-24,-8,0)
-  self.recipepopup:Hide()
-  local s = 1.60
-  self.recipepopup:SetScale(s,s,s)
-
+  if self.hasPopup then
+    self.recipepopup = self:AddChild(FoodRecipePopup(self.owner, self.recipe))
+    self.recipepopup:SetPosition(-24,-8,0)
+    self.recipepopup:Hide()
+    local s = 1.60
+    self.recipepopup:SetScale(s,s,s)
+  end
 end)
 
 function FoodItem:DefineAssetData()
@@ -48,12 +50,16 @@ function FoodItem:SetSlot(slot)
 end
 
 function FoodItem:ShowPopup(cookerIngs)
-  self.recipepopup:Update(cookerIngs)
-  self.recipepopup:Show()
+  if self.hasPopup then
+    self.recipepopup:Update(cookerIngs)
+    self.recipepopup:Show()
+  end
 end
 
 function FoodItem:HidePopup()
-  self.recipepopup:Hide()
+  if self.hasPopup then
+    self.recipepopup:Hide()
+  end
 end
 
 function FoodItem:OnGainFocus()

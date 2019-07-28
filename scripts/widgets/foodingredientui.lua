@@ -1,16 +1,10 @@
 require "class"
 global("FOODTAGDEFINITIONS")
 
-local TileBG = require "widgets/tilebg"
-local InventorySlot = require "widgets/invslot"
 local Image = require "widgets/image"
-local ImageButton = require "widgets/imagebutton"
 local Widget = require "widgets/widget"
-local TabGroup = require "widgets/tabgroup"
-local UIAnim = require "widgets/uianim"
 local Text = require "widgets/text"
 local GetInventoryItemAtlas = require "utils/getinventoryitematlas"
-local mainfunctions = require "mainfunctions"
 require "widgets/widgetutil"
 
 local DELTA_TAG = 0.5
@@ -87,11 +81,25 @@ function FoodIngredientUI:DefineAssetData()
 
   if self.is_name then
     if PREFABDEFINITIONS[self.prefab] then
-      for idx,asset in ipairs(PREFABDEFINITIONS[self.prefab].assets) do
-        if asset.type == "INV_IMAGE" then
-          self.item_tex = asset.file..'.tex'
-        elseif asset.type == "ATLAS" then
-          self.atlas = asset.file
+      -- first run we find assets with exact match of prefab name
+      if not TheSim:AtlasContains(self.atlas, self.item_tex) then
+        for idx,asset in ipairs(PREFABDEFINITIONS[self.prefab].assets) do
+          if asset.type == "INV_IMAGE" then
+            self.item_tex = asset.file..'.tex'
+            self.atlas = GetInventoryItemAtlas(self.item_tex)
+          elseif asset.type == "ATLAS" then
+            self.atlas = asset.file
+          end
+        end
+      end
+
+      -- second run, a special case for migrated items, they are prefixed via `quagmire_`
+      if not TheSim:AtlasContains(self.atlas, self.item_tex) then
+        for idx,asset in ipairs(PREFABDEFINITIONS[self.prefab].assets) do
+          if asset.type == "INV_IMAGE" then
+            self.item_tex = 'quagmire_'..asset.file..'.tex'
+            self.atlas = GetInventoryItemAtlas(self.item_tex)
+          end
         end
       end
     end

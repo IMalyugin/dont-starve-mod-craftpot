@@ -1,12 +1,7 @@
 require "class"
 
-local TileBG = require "widgets/tilebg"
-local InventorySlot = require "widgets/invslot"
 local Image = require "widgets/image"
-local ImageButton = require "widgets/imagebutton"
 local Widget = require "widgets/widget"
-local TabGroup = require "widgets/tabgroup"
-local UIAnim = require "widgets/uianim"
 local Text = require "widgets/text"
 
 local FoodIngredientUI = require "widgets/foodingredientui"

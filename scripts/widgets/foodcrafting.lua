@@ -2,13 +2,8 @@ require "class"
 
 local Widget = require "widgets/widget"
 local TileBG = require "widgets/tilebg"
---local InventorySlot = require "widgets/invslot"
 local Image = require "widgets/image"
 local ImageButton = require "widgets/imagebutton"
---local Widget = require "widgets/widget"
---local TabGroup = require "widgets/tabgroup"
---local UIAnim = require "widgets/uianim"
---local Text = require "widgets/text"
 local FoodSlot = require "widgets/foodslot"--mod
 local FoodItem = require "widgets/fooditem"--mod
 local Cooking = require "cooking"
@@ -59,17 +54,17 @@ function FoodCrafting:OnAfterLoad(config, owner)
   --- create all the recipes
   local recipes = self.knownfoods:GetKnownFoods()
   for foodname, recipe in pairs(recipes) do
-    local fooditem = FoodItem(self.owner, self, recipe)
+    local fooditem = FoodItem(self.owner, self, recipe, self._config.has_popup)
     table.insert(self.allfoods, fooditem)
     self:AddChild(fooditem)
-		fooditem:Hide()
+    fooditem:Hide()
   end
 
-	for slot_idx=1,self.num_slots do
-		local foodslot = FoodSlot(self.owner, self, slot_idx, slot_bgs[slot_idx])
-		table.insert(self.foodslots, foodslot)
-		self:AddChild(foodslot)
-	end
+  for slot_idx=1,self.num_slots do
+	local foodslot = FoodSlot(self.owner, self, slot_idx, slot_bgs[slot_idx])
+	table.insert(self.foodslots, foodslot)
+	self:AddChild(foodslot)
+  end
 
 	--buttons
   self.downbutton = self:AddChild(ImageButton(HUD_ATLAS, "craft_end_normal.tex", "craft_end_normal_mouseover.tex", "craft_end_normal_disabled.tex"))
@@ -140,7 +135,6 @@ function FoodCrafting:FoodFocus(slot_idx)
 		self.focusItem:HidePopup()
 	end
 	self.focusItem = focusItem
-
 	self.focusItem:ShowPopup(self.cookerIngs)
 	self.focusIdx = slot_idx
 end

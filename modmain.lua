@@ -70,9 +70,13 @@ local function OnAfterLoad(controls)
 	local foodcrafting = controls and controls.foodcrafting or player.HUD.controls.foodcrafting
 
 	if player and player.components and player.components.knownfoods and foodcrafting then
-    local config = {lock_uncooked=GetModConfigData("lock_uncooked"), invert_controller=GetModConfigData("invert_controller")}
+    local config = {
+      lock_uncooked=GetModConfigData("lock_uncooked"),
+      invert_controller=GetModConfigData("invert_controller"),
+      has_popup=GetModConfigData("has_popup"),
+    }
     player.components.knownfoods:OnAfterLoad(config)
-		foodcrafting:OnAfterLoad(config, player)
+    foodcrafting:OnAfterLoad(config, player)
   end
 end
 

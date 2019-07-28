@@ -1,6 +1,6 @@
 name = "Craft Pot"
 author = "IvanX"
-version = "0.10.0"
+version = "0.11.0"
 description = "Don't you think cooking and crafting are lot alike?"
 
 priority = 1337
@@ -48,5 +48,15 @@ configuration_options =
         {description = "On", data = true},
     },
     default = false
+  },
+  {
+      name = "has_popup",
+      label = "Ingredient Popup",
+      options =
+      {
+          {description = "Show", data = true},
+          {description = "Hide", data = false},
+      },
+      default = true
   }
 }

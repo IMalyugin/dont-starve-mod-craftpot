@@ -18,6 +18,7 @@ local KnownFoods = Class(function(self)
   self._ingredients = {} -- all known ingredients
   self._alltags = {} -- all known tags
   self._allnames = {} -- all known names
+  self._SPICE_PREFIX = 'spice_'
 
   self._aliases = {
     cookedsmallmeat = "smallmeat_cooked",
@@ -222,11 +223,16 @@ function KnownFoods:_SmartSearch(test)
   local recipe = {tags={},names={}}
 
   local access_list = {} -- list of {type='names'/'tags', field={field}}
+  local isSpicedFoodRecipe = false
 
   setmetatable(names_proxy, {__index=function(t,field)
     if self._ingredients[field] then
       table.insert(access_list, {type='names',field=field})
       return names[field]
+    elseif string.find(tostring(field), self._SPICE_PREFIX) == 1 or self._cookerRecipes[field] then
+      -- if we find some recipe name in the recipe, then it is probably food+spice and should not be added
+      isSpicedFoodRecipe = true
+      return nil
     else
       print("CraftPot ~ detected invalid ingredient ["..field.."] in one of the recipes.")
       return nil
@@ -248,7 +254,9 @@ function KnownFoods:_SmartSearch(test)
     access_list = {}
     result = self:_ptest(test,names_proxy,tags_proxy)
 
-    if result == 1 then
+    if isSpicedFoodRecipe then
+      return false
+    elseif result == 1 then
       return self:_RawToSimple(names,tags)
     elseif result == -3 or #access_list == 0 then -- test returned unknown error or no access
       print ("Could not find recipe, unknown error"..result)

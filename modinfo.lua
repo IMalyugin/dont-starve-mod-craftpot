@@ -1,6 +1,6 @@
 name = "Craft Pot"
 author = "IvanX"
-version = "0.11.1"
+version = "0.12.0"
 description = "Don't you think cooking and crafting are lot alike?"
 
 priority = 1337
@@ -13,6 +13,7 @@ dont_starve_compatible = true
 reign_of_giants_compatible = true
 shipwrecked_compatible = true
 dst_compatible = true
+hamlet_compatible = true
 porkland_compatible = true
 
 icon_atlas = "modicon.xml"

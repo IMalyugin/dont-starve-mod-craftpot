@@ -41,6 +41,7 @@ end
 
 local require = GLOBAL.require
 local TheInput = GLOBAL.TheInput
+local STRINGS = GLOBAL.STRINGS
 
 local MouseFoodCrafting = require "widgets/mousefoodcrafting"
 require "ingredienttags"
@@ -128,7 +129,7 @@ local function ContainerPostConstruct(inst, prefab)
 
   -- only apply mod to components that are cookers and that have no widget
   if not inst.type or inst.type ~= "cooker" or
-    (not inst.widget or not inst.widget.buttoninfo or inst.widget.buttoninfo.text ~= 'Cook') and IsDST()
+    (not inst.widget or not inst.widget.buttoninfo or inst.widget.buttoninfo.text ~= STRINGS.ACTIONS.COOK) and IsDST()
   then
     return false
   end

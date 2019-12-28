@@ -128,8 +128,10 @@ local function ContainerPostConstruct(inst, prefab)
 
 
   -- only apply mod to components that are cookers and that have no widget
-  if not inst.type or inst.type ~= "cooker" or
-    (not inst.widget or not inst.widget.buttoninfo or inst.widget.buttoninfo.text ~= STRINGS.ACTIONS.COOK) and IsDST()
+  if not inst.type or inst.type ~= "cooker" or (
+      not inst.widget or not inst.widget.buttoninfo or
+      inst.widget.buttoninfo.text ~= STRINGS.ACTIONS.COOK and inst.widget.buttoninfo.text ~= "Cook"
+    ) and IsDST()
   then
     return false
   end

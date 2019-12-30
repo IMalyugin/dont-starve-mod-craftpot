@@ -136,7 +136,7 @@ local function ContainerPostConstruct(inst, prefab)
 
 
   -- only apply craftpot modification to the following list of prefabs
-  if not tableContains(inst.inst.prefab, {'cookpot', 'portablecookpot'}) then
+  if not tableContains(inst.inst.prefab, {'cookpot', 'portablecookpot', 'deluxpot'}) then
     return false
   end
 

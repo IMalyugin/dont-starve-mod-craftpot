@@ -141,7 +141,7 @@ end
 
 function FoodCrafting:Open(cooker_inst)
 	self._cooker = cooker_inst
-	self._cookername = cooker_inst.prefab or cooker_inst.inst.prefab
+	self._cookerName = cooker_inst.prefab or cooker_inst.inst.prefab
   self._open = true
 	self:Enable()
   self:Show()
@@ -186,7 +186,7 @@ function FoodCrafting:SortFoods()
 	self:_UpdateFoodStats(cooker_ingdata,#cooker_ings,inv_ings)
 
 	table.sort(self.allfoods, function(a,b)
-    if a.recipe.correctcooker ~= b.recipe.correctcooker then return a.recipe.correctcooker end
+    if a.recipe.correctCooker ~= b.recipe.correctCooker then return a.recipe.correctCooker end
 		if a.recipe.readytocook ~= b.recipe.readytocook then return a.recipe.readytocook end
 		if b.recipe.name == "wetgoop" then return true elseif a.recipe.name == "wetgoop" then return false end
 
@@ -208,10 +208,9 @@ function FoodCrafting:FilterFoods()
 	-- define filterfn
 	for idx, fooditem in ipairs(self.allfoods) do
 		--if not self.filterFn or self.filterFn(fooditem) then
-		if fooditem.recipe.correctcooker then
-			if not fooditem.recipe.hide then
-				table.insert(self.selfoods, fooditem)
-			end
+    -- fooditem.recipe.correctCooker and
+		if not fooditem.recipe.hide then
+      table.insert(self.selfoods, fooditem)
 		end
 		--end
 	end
@@ -358,15 +357,15 @@ function FoodCrafting:_UpdateFoodStats(ingdata, num_ing, inv_ings)
 		local recipe = fooditem.recipe
 		self.knownfoods:UpdateRecipe(recipe, ingdata)
 
-		recipe.correctcooker = not recipe.specialcooker or recipe.cookername == self._cookername
-		if num_ing == 4 and recipe.correctcooker and recipe.reqsmatch then
+		recipe.correctCooker = recipe.supportedCookers[self._cookerName]
+		if num_ing == 4 and recipe.correctCooker and recipe.reqsmatch then
 			recipe.readytocook = true
 			if recipe.priority > cook_priority then
 				cook_priority = recipe.priority
 			end
 		end
 
-		recipe.hide = num_ing > 0 and (not recipe.correctcooker or recipe.reqsmismatch)
+		recipe.hide = num_ing > 0 and recipe.reqsmismatch
 	end
 
 	if num_ing == 4 then

@@ -60,36 +60,33 @@ function FoodSlot:Refresh()
   local unlocked = recipe.unlocked
   local reqsmatch = recipe.reqsmatch
   local readytocook = recipe.readytocook
-  local correctcooker = recipe.correctcooker
+  local correctCooker = recipe.correctCooker
+  local hud_atlas = resolvefilepath( "images/hud.xml" )
 
   if foodname then
     reqsmatch = reqsmatch
 
     if self.fgimage then
-      if unlocked and correctcooker then
+      self.bgimage:SetTexture(self.atlas, "craft_slot.tex")
+
+      if unlocked then
+        self.fgimage:Hide()
+
         if readytocook then
           self.bgimage:SetTexture(self.atlas, "craft_slot_place.tex")
-        else
-          self.bgimage:SetTexture(self.atlas, "craft_slot.tex")
+        elseif not correctCooker then
+          self.fgimage:SetTexture(hud_atlas, "craft_slot_locked_nextlevel.tex")
+          self.fgimage:Show()
         end
-
-        self.fgimage:Hide()
       else
-
-
-        local hud_atlas = resolvefilepath( "images/hud.xml" )
-
-        if not correctcooker then
-            self.fgimage:SetTexture(hud_atlas, "craft_slot_locked_nextlevel.tex")
+        if not correctCooker then
+          self.fgimage:SetTexture(hud_atlas, "craft_slot_locked_nextlevel.tex")
         elseif reqsmatch then
-            self.fgimage:SetTexture(hud_atlas, "craft_slot_locked_highlight.tex")
+          self.fgimage:SetTexture(hud_atlas, "craft_slot_locked_highlight.tex")
         else
-            self.fgimage:SetTexture(hud_atlas, "craft_slot_locked.tex")
+          self.fgimage:SetTexture(hud_atlas, "craft_slot_locked.tex")
         end
-
-        self.bgimage:SetTexture(self.atlas, "craft_slot.tex")
         self.fgimage:Show()
-        --if not readytocook then self.bgimage:SetTexture(self.atlas, "craft_slot.tex") end -- Make sure we clear out the place bg if it's a new tab
       end
     end
   end

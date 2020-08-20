@@ -38,6 +38,15 @@ local function AddPlayerPostInit(fn)
   end
 end
 
+local function tableContains(item, table)
+  for i, el in ipairs(table) do
+    if el == item then
+      return true
+    end
+  end
+  return false
+end
+
 
 local require = GLOBAL.require
 local TheInput = GLOBAL.TheInput
@@ -99,7 +108,6 @@ local function OnGameLoad()
   OnAfterLoad()
 end
 
-
 local function ControlsPostInit(self)
   _ControlsLoaded = true
   if IsDST() then
@@ -127,12 +135,8 @@ local function ContainerPostConstruct(inst, prefab)
   end
 
 
-  -- only apply mod to components that are cookers and that have no widget
-  if not inst.type or inst.type ~= "cooker" or (
-      not inst.widget or not inst.widget.buttoninfo or
-      inst.widget.buttoninfo.text ~= STRINGS.ACTIONS.COOK and inst.widget.buttoninfo.text ~= "Cook"
-    ) and IsDST()
-  then
+  -- only apply craftpot modification to the following list of prefabs
+  if not tableContains(inst.inst.prefab, {'cookpot', 'portablecookpot', 'deluxpot'}) then
     return false
   end
 

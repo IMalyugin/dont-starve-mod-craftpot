@@ -82,7 +82,7 @@ function FoodIngredientUI:DefineAssetData()
   if self.is_name then
     if PREFABDEFINITIONS[self.prefab] then
       -- first run we find assets with exact match of prefab name
-      if not TheSim:AtlasContains(self.atlas, self.item_tex) then
+      if not self.atlas or not TheSim:AtlasContains(self.atlas, self.item_tex) then
         for idx,asset in ipairs(PREFABDEFINITIONS[self.prefab].assets) do
           if asset.type == "INV_IMAGE" then
             self.item_tex = asset.file..'.tex'
@@ -94,7 +94,7 @@ function FoodIngredientUI:DefineAssetData()
       end
 
       -- second run, a special case for migrated items, they are prefixed via `quagmire_`
-      if not TheSim:AtlasContains(self.atlas, self.item_tex) then
+      if not self.atlas or not TheSim:AtlasContains(self.atlas, self.item_tex) then
         for idx,asset in ipairs(PREFABDEFINITIONS[self.prefab].assets) do
           if asset.type == "INV_IMAGE" then
             self.item_tex = 'quagmire_'..asset.file..'.tex'

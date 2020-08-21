@@ -32,8 +32,7 @@ function FoodItem:DefineAssetData()
   self.item_tex = self.prefab..'.tex'
   self.atlas = GetInventoryItemAtlas(self.item_tex)
   if PREFABDEFINITIONS[self.prefab] and not (
-      TheSim.AtlasContains and
-      TheSim:AtlasContains(self.atlas, self.item_tex)
+    self.atlas and TheSim:AtlasContains(self.atlas, self.item_tex)
   ) then
     for idx,asset in ipairs(PREFABDEFINITIONS[self.prefab].assets) do
       if asset.type == "INV_IMAGE" then

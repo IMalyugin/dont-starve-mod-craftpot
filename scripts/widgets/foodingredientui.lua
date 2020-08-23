@@ -1,12 +1,11 @@
 require "class"
-global("FOODTAGDEFINITIONS")
+require "widgets/widgetutil"
 
 local Image = require "widgets/image"
 local Widget = require "widgets/widget"
 local Text = require "widgets/text"
-local GetInventoryItemAtlas = require "utils/getinventoryitematlas"
-local print_tbl = require "utils/print_tbl"
-require "widgets/widgetutil"
+local ResolveFoodTagAssets = require "utils/resolvefoodtagassets"
+local ResolveInventoryItemAssets = require "utils/resolveinventoryitemassets"
 
 local DELTA_TAG = 0.5
 
@@ -76,54 +75,10 @@ function FoodIngredientUI:GetIngredient()
 end
 
 function FoodIngredientUI:DefineAssetData()
-  self.item_tex = self.prefab..'.tex'
-  self.atlas = GetInventoryItemAtlas(self.item_tex)
-  self.localized_name = STRINGS.NAMES[string.upper(self.prefab)] or self.prefab
-  local prefabData = Prefabs[self.prefab]
-
-  if self.is_name and prefabData then
-    -- first run we find assets with exact match of prefab name
-    if not self.atlas or not TheSim:AtlasContains(self.atlas, self.item_tex) then
-      for idx,asset in ipairs(prefabData.assets) do
-        if asset.type == "INV_IMAGE" then
-          self.item_tex = asset.file..'.tex'
-          self.atlas = GetInventoryItemAtlas(self.item_tex)
-        elseif asset.type == "ATLAS" then
-          self.atlas = asset.file
-        end
-      end
-    end
-
-    -- second run, a special case for migrated items, they are prefixed via `quagmire_`
-    if not self.atlas or not TheSim:AtlasContains(self.atlas, self.item_tex) then
-      for idx,asset in ipairs(Prefabs[self.prefab].assets) do
-        if asset.type == "INV_IMAGE" then
-          self.item_tex = 'quagmire_'..asset.file..'.tex'
-          self.atlas = GetInventoryItemAtlas(self.item_tex)
-        end
-      end
-    end
+  if self.is_name then
+    self.item_tex, self.atlas, self.localized_name = ResolveInventoryItemAssets(self.prefab)
   else
-    local tagData = FOODTAGDEFINITIONS[self.prefab]
-    if tagData then
-      if tagData.atlas then
-        self.atlas = resolvefilepath(tagData.atlas)
-      end
-      if tagData.tex then
-        self.item_tex = tagData.tex
-      end
-      if tagData.name then
-        self.localized_name = STRINGS.NAMES[string.upper(self.prefab)] or tagData.name
-      end
-    else
-      self.item_tex = 'unknown.tex'
-    end
-  end
-
-  -- cleanup partially filled data
-  if not self.atlas or not self.item_tex then
-    self.atlas = nil
-    self.item_tex = nil
+    self.item_tex, self.atlas, self.localized_name = ResolveFoodTagAssets(self.prefab)
   end
 end
 

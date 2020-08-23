@@ -4,8 +4,7 @@ local Widget = require "widgets/widget"
 
 local Image = require "widgets/image"
 local FoodRecipePopup = require "widgets/foodrecipepopup"
-
-local GetInventoryItemAtlas = require "utils/getinventoryitematlas"
+local ResolveInventoryItemAssets = require "utils/resolveinventoryitemassets"
 
 local FoodItem = Class(Widget, function(self, owner, foodcrafting, recipe, hasPopup)
   Widget._ctor(self, "FoodItem")
@@ -29,19 +28,7 @@ local FoodItem = Class(Widget, function(self, owner, foodcrafting, recipe, hasPo
 end)
 
 function FoodItem:DefineAssetData()
-  self.item_tex = self.prefab..'.tex'
-  self.atlas = GetInventoryItemAtlas(self.item_tex)
-  if PREFABDEFINITIONS[self.prefab] and not (
-    self.atlas and TheSim:AtlasContains(self.atlas, self.item_tex)
-  ) then
-    for idx,asset in ipairs(PREFABDEFINITIONS[self.prefab].assets) do
-      if asset.type == "INV_IMAGE" then
-        self.item_tex = asset.file..'.tex'
-      elseif asset.type == "ATLAS" then
-        self.atlas = asset.file
-      end
-    end
-  end
+  self.item_tex, self.atlas, self.localized_name = ResolveInventoryItemAssets(self.prefab)
 end
 
 function FoodItem:SetSlot(slot)

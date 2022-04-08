@@ -9,10 +9,10 @@ end
 local KnownFoods = Class(function(self)
   self._dtag = 0.5
   self._basicCooker = 'cookpot'
-  self._cooker = {} -- openned cooker inst
+  self._cooker = {} -- opened cooker inst
   self._cookerName = self._basicCooker
   self._config = {} -- mod config goes in here onafterload
-  self._knownfoods = {} -- enchanced format recipes
+  self._knownfoods = {} -- enhanced format recipes
   self._loadedfoods = {} -- loaded recipe data
   self._cookerRecipes = {} -- raw format recipes
   self._ingredients = {} -- all known ingredients
@@ -163,7 +163,7 @@ function KnownFoods:_DecompositionStep(mix, recipe, list)
       elseif last.tag then
         recipe.mintags[last.tag] = recipe.mintags[last.tag] and recipe.mintags[last.tag] + last.amt or last.amt
       end
-    else -- uh-oh... recipe split incomming
+    else -- uh-oh... recipe split incoming
       for j, branch in ipairs(last) do
         table.insert(mix,branch)
         self:_DecompositionStep(mix, deepcopy(recipe), list)
@@ -200,7 +200,7 @@ function KnownFoods:OnAfterLoad(config)
 
   -- then apply loaded recipe data to parsed recipes
   for foodName, recipe in pairs(self._loadedfoods) do
-    if self._cookerRecipes[foodName] then
+    if self._cookerRecipes[foodName] and self._knownfoods[foodName] then
       for param, value in pairs(recipe) do
         self._knownfoods[foodName][param] = value
       end
@@ -211,7 +211,7 @@ function KnownFoods:OnAfterLoad(config)
   end
 end
 
--- perform iterative search over missing preparedfood list recipes and attempt to find their real recipes
+-- perform iterative search over missing prepared food list recipes and attempt to find their real recipes
 function KnownFoods:_SmartSearch(test)
   --local vtags = {} -- holds tags with possible values {vtags.veggie = {nil, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4}}
   --local vnames = {} -- holds names with possible values {vnames.froglegs = {nil,1,2,3,4}}
@@ -440,7 +440,7 @@ function KnownFoods:MinimizeRecipe(foodname,recipe)
       tags[tag] = 1000
       if self:_ptest(test, names, tags) == 1 then -- _Test[amount+1] == true and _Test[1000] == true, no restriction needed
         recipe.maxtags[tag] = nil
-      else -- _Test[amount+1] == true and _Test[1000] == false, restriction is somwhere above
+      else -- _Test[amount+1] == true and _Test[1000] == false, restriction is somewhere above
         tags[tag] = maxtest + self._dtag
         while self:_ptest(test, names, tags) == 1 and tags[tag] < 1001 do
           tags[tag] = tags[tag] + self._dtag
@@ -559,7 +559,7 @@ end
 function KnownFoods:_TestMax(foodname, names, tags)
   local recipe = self._knownfoods[foodname]
   if not recipe then
-    print('Error in KnownFoods:_TestMax - attempting to test non existant recipe')
+    print('Error in KnownFoods:_TestMax - attempting to test non existent recipe')
     return false
   end
 

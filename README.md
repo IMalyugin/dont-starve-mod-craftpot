@@ -1,4 +1,5 @@
 # Don't Starve Mod - Craft Pot
 
-Lua codebase for highlighted mod with over 1mil subscribers and high average of 5/5 starts.
-Written and supported entirely by IMalyugin.
+Lua codebase for a legendary mod with over 3 million subscribers and high average of 5/5 stars.
+
+Authored and maintained by IMalyugin.

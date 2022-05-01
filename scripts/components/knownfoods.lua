@@ -7,7 +7,7 @@ local function IsClientSim()
 end
 
 local KnownFoods = Class(function(self)
-  self._dtag = 0.5
+  self._dtag = 0.25
   self._basicCooker = 'cookpot'
   self._cooker = {} -- opened cooker inst
   self._cookerName = self._basicCooker

@@ -7,7 +7,7 @@ local function IsClientSim()
 end
 
 local KnownFoods = Class(function(self)
-  self._dtag = 0.5
+  self._dtag = 0.25
   self._basicCooker = 'cookpot'
   self._cooker = {} -- opened cooker inst
   self._cookerName = self._basicCooker
@@ -278,7 +278,7 @@ function KnownFoods:_SmartSearch(test)
     else -- test returned false or compare error (-1 or 0)
       local access = table.remove(access_list)
       if access.type == 'tags' then
-        tags[access.field] = tags[access.field] and tags[access.field] + 0.5 or 0.5
+        tags[access.field] = tags[access.field] and tags[access.field] + 0.25 or 0.25
         if tags[access.field] > 4 then -- quit condition, tag over max value
           print ("Could not find recipe, tag over max")
           return false

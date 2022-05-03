@@ -48,13 +48,15 @@ local function tableHasKey(key, table)
 end
 
 
+local require = GLOBAL.require
+local TheInput = GLOBAL.TheInput
+local STRINGS = GLOBAL.STRINGS
+
 -- Modder API provided in the following modules
 require "ingredienttags"
 require "cookingpots"
 
-local require = GLOBAL.require
-local TheInput = GLOBAL.TheInput
-local STRINGS = GLOBAL.STRINGS
+-- declared within cookingpots, so must be located after require
 local COOKINGPOTS = GLOBAL.COOKINGPOTS
 
 local MouseFoodCrafting = require "widgets/mousefoodcrafting"

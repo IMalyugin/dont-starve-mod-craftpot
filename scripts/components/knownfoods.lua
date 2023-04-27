@@ -278,7 +278,7 @@ function KnownFoods:_SmartSearch(test)
     else -- test returned false or compare error (-1 or 0)
       local access = table.remove(access_list)
       if access.type == 'tags' then
-        tags[access.field] = tags[access.field] and tags[access.field] + 0.25 or 0.25
+        tags[access.field] = tags[access.field] and tags[access.field] + self._dtag or self._dtag
         if tags[access.field] > 4 then -- quit condition, tag over max value
           print ("Could not find recipe, tag over max")
           return false

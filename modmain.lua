@@ -38,22 +38,18 @@ local function AddPlayerPostInit(fn)
   end
 end
 
-local function tableContains(item, table)
-  for i, el in ipairs(table) do
-    if el == item then
-      return true
-    end
-  end
-  return false
-end
-
-
 local require = GLOBAL.require
 local TheInput = GLOBAL.TheInput
 local STRINGS = GLOBAL.STRINGS
 
-local MouseFoodCrafting = require "widgets/mousefoodcrafting"
+-- Modder API provided in the following modules
 require "ingredienttags"
+require "cookingpots"
+
+-- declared within cookingpots, so must be located after require
+local COOKINGPOTS = GLOBAL.COOKINGPOTS
+
+local MouseFoodCrafting = require "widgets/mousefoodcrafting"
 
 Assets = {
   Asset("ATLAS", "images/food_tags.xml"),
@@ -135,8 +131,8 @@ local function ContainerPostConstruct(inst, prefab)
   end
 
 
-  -- only apply craftpot modification to the following list of prefabs
-  if not tableContains(inst.inst.prefab, {'cookpot', 'portablecookpot', 'deluxpot', 'medal_cookpot'}) then
+  -- only apply craftpot modification to registered cooking pots, see cookingpots.lua
+  if (COOKINGPOTS or {})[inst.inst.prefab] == nil then
     return false
   end
 

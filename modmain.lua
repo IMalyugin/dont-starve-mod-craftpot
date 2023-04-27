@@ -38,16 +38,6 @@ local function AddPlayerPostInit(fn)
   end
 end
 
-local function tableHasKey(key, table)
-  for k, _ in pairs(table) do
-    if k == key then
-      return true
-    end
-  end
-  return false
-end
-
-
 local require = GLOBAL.require
 local TheInput = GLOBAL.TheInput
 local STRINGS = GLOBAL.STRINGS
@@ -142,7 +132,7 @@ local function ContainerPostConstruct(inst, prefab)
 
 
   -- only apply craftpot modification to registered cooking pots, see cookingpots.lua
-  if not tableHasKey(inst.inst.prefab, COOKINGPOTS or {}) then
+  if (COOKINGPOTS or {})[inst.inst.prefab] == nil then
     return false
   end
 

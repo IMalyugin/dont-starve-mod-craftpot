@@ -45,6 +45,7 @@ local STRINGS = GLOBAL.STRINGS
 -- Modder API provided in the following modules
 require "ingredienttags"
 require "cookingpots"
+require "foodatlas"
 
 -- declared within cookingpots, so must be located after require
 local COOKINGPOTS = GLOBAL.COOKINGPOTS

@@ -7,6 +7,10 @@ return function(prefab)
   local atlas = GetInventoryItemAtlas(item_tex)
   local localized_name = STRINGS.NAMES[string.upper(prefab)] or prefab
   local prefabData = Prefabs[prefab]
+  
+  local registered_image, registered_altas = GetFoodAtlas(prefab)
+  item_tex = registered_image or item_tex
+  atlas = registered_altas or atlas
 
   if prefabData then
     -- first run we find assets with exact match of prefab name

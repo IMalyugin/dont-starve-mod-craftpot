@@ -28,7 +28,14 @@ local FoodItem = Class(Widget, function(self, owner, foodcrafting, recipe, hasPo
 end)
 
 function FoodItem:DefineAssetData()
-  self.item_tex, self.atlas, self.localized_name = ResolveInventoryItemAssets(self.prefab)
+  self.item_tex = self.prefab..'.tex'
+  self.atlas = GetInventoryItemAtlas(self.item_tex)
+  self.localized_name = STRINGS.NAMES[string.upper(self.prefab)] or self.prefab
+  -- No idea about this issue: 
+  --    https://forums.kleientertainment.com/forums/topic/145440-the-atlas-resolved-by-getinventoryitematlas-cannot-be-tested-by-thesimatlascontains
+  -- if not self.atlas or not TheSim:AtlasContains(self.atlas, self.item_tex) then
+  --   print("Craft pot ~ AssetData: failed to resolve[" .. self.prefab .. "]" .. self.localized_name .. " tex:" .. (self.item_tex or "nil") .. " atlas:" .. (self.atlas or "nil"))
+  -- end
 end
 
 function FoodItem:SetSlot(slot)

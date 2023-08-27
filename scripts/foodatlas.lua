@@ -5,7 +5,7 @@ function RegisterFoodAtlas(prefab, imagename, atlasname)
   if prefab ~= nil and atlasname ~= nil and imagename ~= nil then
     if FoodAtlasLookup[prefab] ~= nil then
       print("RegisterFoodAtlas: Image '" .. imagename .. "' is already registered to atlas '"
-              .. FoodAtlasLookup[imagename] .. "'")
+              .. FoodAtlasLookup[prefab][2] .. "'")
       return
     end
     FoodAtlasLookup[prefab] = {imagename, atlasname}

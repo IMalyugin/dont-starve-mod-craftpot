@@ -27,7 +27,7 @@ local KnownFoods = Class(function(self)
   }
 
   if IsClientSim() then
-    self._filepath = "session/"..(TheNet:GetSessionIdentifier() or "INVALID_SESSION").."/"..(TheNet:GetUserID() or "INVALID_USERID").."_/knownfoods_data"
+    self._name = "craftpot_"..(TheNet:GetSessionIdentifier() or "INVALID_SESSION").."_"..(TheNet:GetUserID() or "INVALID_USERID").."_knownfoods_data"
     self:OnLoad()
   end
 end)
@@ -42,7 +42,7 @@ function KnownFoods:OnSave()
   end
   if IsClientSim() then
     local str = json.encode(data)
-    TheSim:SetPersistentString(self._filepath, str, true)
+    TheSim:SetPersistentString(self._name, str, true)
   else
     return data
   end
@@ -51,7 +51,7 @@ end
 function KnownFoods:OnLoad(data)
   if IsClientSim() then
     -- ClientSim load uses PersistentString data
-    TheSim:GetPersistentString(self._filepath, function(success, strdata)
+    TheSim:GetPersistentString(self._name, function(success, strdata)
       if success then
         data = json.decode(strdata)
       end

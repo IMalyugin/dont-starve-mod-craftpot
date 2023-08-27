@@ -32,5 +32,10 @@ return function(prefab)
     end
   end
 
+  -- manually added via mod api
+  local registered_image, registered_altas = GetFoodAtlas(prefab)
+  item_tex = registered_image or item_tex
+  atlas = registered_altas or atlas
+
   return SanitizeAssets(item_tex, atlas, localized_name)
 end

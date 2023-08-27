@@ -356,8 +356,7 @@ function FoodCrafting:_UpdateFoodStats(ingdata, num_ing, inv_ings)
 	for idx, fooditem in ipairs(self.allfoods) do
 		local recipe = fooditem.recipe
 		self.knownfoods:UpdateRecipe(recipe, ingdata)
-
-		recipe.correctCooker = recipe.supportedCookers[self._cookerName]
+    recipe.correctCooker = recipe.supportedCookers[self._cookerName] or recipe.supportedCookers['cookpot']
 		if num_ing == 4 and recipe.correctCooker and recipe.reqsmatch then
 			recipe.readytocook = true
 			if recipe.priority > cook_priority then

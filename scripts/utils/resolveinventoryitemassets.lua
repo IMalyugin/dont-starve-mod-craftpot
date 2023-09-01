@@ -1,6 +1,6 @@
 local GetInventoryItemAtlas = require "utils/getinventoryitematlas"
 local SanitizeAssets = require "utils/sanitizeassets"
-
+local resolvefilepath_soft = rawget(_G,"resolvefilepath_soft") or softresolvefilepath
 -- An ugly, yet partially efficient attempt at getting inventory item assets
 return function(prefab)
   local item_tex = prefab..'.tex'
@@ -10,7 +10,7 @@ return function(prefab)
 
   if prefabData then
     -- first run we find assets with exact match of prefab name
-    if not atlas or not TheSim:AtlasContains(atlas, item_tex) then
+    if not atlas or not TheSim:AtlasContains(resolvefilepath_soft(atlas), item_tex) then
       for _, asset in ipairs(prefabData.assets) do
         if asset.type == "INV_IMAGE" then
           item_tex = asset.file..'.tex'
@@ -22,7 +22,7 @@ return function(prefab)
     end
 
     -- second run, a special case for migrated items, they are prefixed via `quagmire_`
-    if not atlas or not TheSim:AtlasContains(atlas, item_tex) then
+    if not atlas or not TheSim:AtlasContains(resolvefilepath_soft(atlas), item_tex) then
       for _, asset in ipairs(Prefabs[prefab].assets) do
         if asset.type == "INV_IMAGE" then
           item_tex = 'quagmire_'..asset.file..'.tex'
